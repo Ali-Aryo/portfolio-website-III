@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react'
-import heroVideo from '../assets/hero25.mp4'
+import heroVideo from '../assets/hero.mp4'
 import heroPoster from '../assets/hero-poster.jpg'
 
 function Hero() {
