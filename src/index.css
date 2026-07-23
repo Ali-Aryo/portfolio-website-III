@@ -1,0 +1,99 @@
+@import 'tailwindcss';
+
+/* --- Design tokens ---------------------------------------------------------
+   Defined in @theme so each one generates real utilities:
+   --color-accent  ->  bg-accent / text-accent / border-accent
+   --font-heading  ->  font-heading, etc.
+   Utilities reference the variable (not the literal), so overriding a token
+   in the dark media query below re-themes the whole site automatically. */
+@theme {
+  --color-bg: #ffffff;
+  --color-text: #6b6375;
+  --color-heading: #08060d;
+  --color-border: #e5e4e7;
+  --color-accent: #aa3bff;
+
+  /* Hero sits over the video, so it always uses fixed light-on-dark colors
+     regardless of the site theme. */
+  --color-hero-fg: #f7f5fb;
+  --color-hero-muted: #cbc5d6;
+  --color-hero-accent: #c084fc;
+  --color-hero-ink: #08060d;
+
+  --font-sans: system-ui, 'Segoe UI', Roboto, sans-serif;
+  --font-heading: system-ui, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: ui-monospace, Consolas, monospace;
+
+  --animate-status-pulse: status-pulse 2.4s ease-out infinite;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-bg: #16171d;
+    --color-text: #9ca3af;
+    --color-heading: #f3f4f6;
+    --color-border: #2e303a;
+    --color-accent: #c084fc;
+  }
+}
+
+/* --- Custom utilities ------------------------------------------------------
+   Complex multi-stop gradients read far better as named utilities than as
+   inline arbitrary values. Both work with variants (e.g. max-md:hero-scrim). */
+@utility hero-scrim {
+  background:
+    linear-gradient(
+      90deg,
+      rgba(8, 6, 13, 0) 0%,
+      rgba(8, 6, 13, 0) 30%,
+      rgba(8, 6, 13, 0.4) 50%,
+      rgba(8, 6, 13, 0.72) 72%,
+      rgba(8, 6, 13, 0.88) 100%
+    ),
+    linear-gradient(0deg, rgba(8, 6, 13, 0.4) 0%, rgba(8, 6, 13, 0) 45%);
+}
+
+@utility hero-scrim-mobile {
+  background: linear-gradient(
+    0deg,
+    rgba(8, 6, 13, 0.85) 0%,
+    rgba(8, 6, 13, 0.45) 45%,
+    rgba(8, 6, 13, 0.2) 100%
+  );
+}
+
+@keyframes status-pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(74, 222, 128, 0.5);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(74, 222, 128, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(74, 222, 128, 0);
+  }
+}
+
+/* --- Base ------------------------------------------------------------------ */
+@layer base {
+  :root {
+    color-scheme: light dark;
+  }
+
+  body {
+    background: var(--color-bg);
+    color: var(--color-text);
+    font-size: 18px;
+    line-height: 1.45;
+    letter-spacing: 0.18px;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  #root {
+    min-height: 100svh;
+    display: flex;
+    flex-direction: column;
+  }
+}
