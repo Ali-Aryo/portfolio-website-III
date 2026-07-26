@@ -2,6 +2,7 @@
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 @import "@fontsource-variable/geist";
+@import "@fontsource-variable/cinzel";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -22,14 +23,30 @@
      regardless of the site theme. */
   --color-hero-fg: #f7f5fb;
   --color-hero-muted: #cbc5d6;
-  --color-hero-accent: #c084fc;
+  /* Points at the skills-band icon blue so the two accents can never drift. */
+  --color-hero-accent: var(--color-glass-accent);
   --color-hero-ink: #08060d;
+
+  /* Sampled off hero2.jpeg — from the falls themselves, so the skills band
+     reads as a pane of the same water it sits over. */
+  --color-glass-tint: #a9b8c3;
+  /* falls, mid tone — the body of the glass */
+  --color-glass-edge: #d6e6ef;
+  /* lifted spray — the lit top edge */
+  --color-glass-accent: #8fc3e0;
+  /* icons */
+  --color-glass-text: #eef6fa;
+  /* labels */
 
   --font-sans: system-ui, 'Segoe UI', Roboto, sans-serif;
   --font-heading: system-ui, 'Segoe UI', Roboto, sans-serif;
   --font-mono: ui-monospace, Consolas, monospace;
 
   --animate-status-pulse: status-pulse 2.4s ease-out infinite;
+  --animate-scroll-float: scroll-float 2.6s ease-in-out infinite;
+  /* Fallback only — SkillCarousel overrides the duration inline, derived from
+     the measured list width so the speed holds as skills are added. */
+  --animate-skill-marquee: skill-marquee 42s linear infinite;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -47,33 +64,106 @@
    inline arbitrary values. Both work with variants (e.g. max-md:hero-scrim). */
 @utility hero-scrim {
   background:
-    linear-gradient(
-      90deg,
+    linear-gradient(90deg,
       rgba(8, 6, 13, 0) 0%,
       rgba(8, 6, 13, 0) 30%,
       rgba(8, 6, 13, 0.4) 50%,
       rgba(8, 6, 13, 0.72) 72%,
-      rgba(8, 6, 13, 0.88) 100%
-    ),
+      rgba(8, 6, 13, 0.88) 100%),
     linear-gradient(0deg, rgba(8, 6, 13, 0.4) 0%, rgba(8, 6, 13, 0) 45%);
 }
 
 @utility hero-scrim-mobile {
-  background: linear-gradient(
-    0deg,
-    rgba(8, 6, 13, 0.85) 0%,
-    rgba(8, 6, 13, 0.45) 45%,
-    rgba(8, 6, 13, 0.2) 100%
-  );
+  background: linear-gradient(0deg,
+      rgba(8, 6, 13, 0.85) 0%,
+      rgba(8, 6, 13, 0.45) 45%,
+      rgba(8, 6, 13, 0.2) 100%);
+}
+
+/* Knocks back the pinned site backdrop so cards and timelines stay legible on
+   top of it. These two alphas are the main legibility knob — raise them if
+   foreground content is hard to read, lower them to let more artwork through. */
+@utility site-bg-scrim {
+  background: linear-gradient(180deg,
+      rgba(8, 6, 13, 0.68) 0%,
+      rgba(8, 6, 13, 0.84) 100%);
+}
+
+/* Frosted pane of waterfall spray. The two inset highlights are what sell it as
+   glass rather than a tinted box: a bright lit top edge and a faint bottom one,
+   as though light were passing through a physical slab. The saturate() boost
+   makes whatever is behind it bloom through the blur. */
+@utility liquid-glass {
+  background: linear-gradient(180deg,
+      rgba(214, 230, 239, 0.15) 0%,
+      rgba(169, 184, 195, 0.08) 55%,
+      rgba(139, 165, 184, 0.1) 100%);
+
+  /* rgba(214, 230, 239, 0.5) 0%,
+      rgba(169, 184, 195, 0.35) 55%,
+      rgba(139, 165, 184, 0.4) 100%); */
+
+
+  -webkit-backdrop-filter: blur(20px) saturate(1.7);
+  backdrop-filter: blur(20px) saturate(1.7);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.5),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.14),
+    0 10px 34px -14px rgba(8, 6, 13, 0.65);
+}
+
+/* The track holds N identical copies of the skill list, so travelling exactly
+   1/N of its width lands on an identical frame and the loop is invisible.
+   SkillCarousel measures N and sets --marquee-copies; the count has to grow
+   with the viewport, or the tail of each cycle exposes empty space. */
+@keyframes skill-marquee {
+  from {
+    transform: translate3d(0, 0, 0);
+  }
+
+  to {
+    transform: translate3d(calc(-100% / var(--marquee-copies, 2)), 0, 0);
+  }
+}
+
+/* Fades the band's ends so items enter and leave instead of being clipped. */
+@utility skill-marquee-mask {
+  -webkit-mask-image: linear-gradient(90deg,
+      transparent 0%,
+      #000 6%,
+      #000 94%,
+      transparent 100%);
+  mask-image: linear-gradient(90deg,
+      transparent 0%,
+      #000 6%,
+      #000 94%,
+      transparent 100%);
+}
+
+/* Drifts the scroll cue down and back. Opacity moves with it so it reads as
+   breathing rather than sliding. */
+@keyframes scroll-float {
+  0%,
+  100% {
+    transform: translateY(0);
+    opacity: 0.68;
+  }
+
+  50% {
+    transform: translateY(0.5rem);
+    opacity: 1;
+  }
 }
 
 @keyframes status-pulse {
   0% {
     box-shadow: 0 0 0 0 rgba(74, 222, 128, 0.5);
   }
+
   70% {
     box-shadow: 0 0 0 10px rgba(74, 222, 128, 0);
   }
+
   100% {
     box-shadow: 0 0 0 0 rgba(74, 222, 128, 0);
   }
@@ -102,16 +192,21 @@
     display: flex;
     flex-direction: column;
   }
+
   * {
     @apply border-border outline-ring/50;
   }
+
   html {
     @apply font-sans;
   }
 }
 
 @theme inline {
-  --font-heading: var(--font-sans);
+  /* Cinzel is an inscriptional display serif — it carries headings well but is
+     hard work at body sizes, so it is scoped to --font-heading. Point
+     --font-sans at it too if you want it site-wide. */
+  --font-heading: 'Cinzel Variable', Georgia, serif;
   --font-sans: 'Geist Variable', sans-serif;
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
