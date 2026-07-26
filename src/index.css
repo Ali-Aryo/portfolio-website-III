@@ -1,6 +1,5 @@
 @import 'tailwindcss';
 @import "tw-animate-css";
-@import "shadcn/tailwind.css";
 @import "@fontsource-variable/geist";
 @import "@fontsource-variable/cinzel";
 
@@ -143,6 +142,7 @@
 /* Drifts the scroll cue down and back. Opacity moves with it so it reads as
    breathing rather than sliding. */
 @keyframes scroll-float {
+
   0%,
   100% {
     transform: translateY(0);
