@@ -1,48 +1,21 @@
-import { useEffect, useRef } from 'react'
-import aboutVideo from '../assets/About.mp4'
-import aboutPoster from '../assets/About.png'
+import ProjectCards from '../components/ui/project-cards';
+import Timeline from '../components/ui/timeline'
 
 
+/**
+ * Sits over the pinned SiteBackground rather than carrying a background of its
+ * own — `relative z-10` and no background is the pattern for every section
+ * below the hero.
+ */
 function About() {
-    const videoRef = useRef<HTMLVideoElement>(null)
-
-    // Respect users who prefer reduced motion: keep the poster frame, don't play.
-    useEffect(() => {
-        const video = videoRef.current
-        if (!video) return
-
-        const prefersReducedMotion = window.matchMedia(
-            '(prefers-reduced-motion: reduce)',
-        ).matches
-
-        if (prefersReducedMotion) {
-            video.removeAttribute('autoplay')
-            video.pause()
-        }
-    }, [])
-
     return (
         <section
             id="about"
-            className="relative flex min-h-svh w-full items-center justify-end overflow-hidden text-hero-fg max-md:items-end max-md:justify-center max-md:pb-[12vh]"
+            className="relative z-10 flex min-h-svh w-full flex-col justify-center px-[clamp(1.5rem,6vw,7rem)] py-[12vh] text-hero-fg"
         >
-            {/* Video div */}
-            <div
-                className="absolute inset-0 z-0"
-                aria-hidden="true">
-                <video
-                    ref={videoRef}
-                    className="block h-full w-full object-cover"
-                    src={aboutVideo}
-                    poster={aboutPoster}
-                    autoPlay
-                    loop
-                    muted
-                    playsInline
-                />
-
-                {/* not sure if needed - check what do */}
-                <div className="absolute inset-0 hero-scrim max-md:hero-scrim-mobile" />
+            <Timeline />
+            <div className="mt-[8vh]">
+                <ProjectCards />
             </div>
         </section>
     )
