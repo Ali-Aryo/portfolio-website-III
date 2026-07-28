@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react'
+import resumePdf from '../../assets/Resume.pdf'
 
 type GlassLinkProps = {
   href: string
@@ -45,8 +46,7 @@ function HeroNav() {
     >
       <GlassLink href="#work">View Work</GlassLink>
       <GlassLink href="#contact">Get in Touch</GlassLink>
-      {/* Drop the PDF at public/resume.pdf for this to resolve. */}
-      <GlassLink href="/resume.pdf" external>
+      <GlassLink href={resumePdf} external>
         View Resume
       </GlassLink>
     </nav>
