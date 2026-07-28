@@ -2,7 +2,6 @@ import { useEffect, useRef } from 'react'
 import { ChevronDown } from 'lucide-react'
 import heroVideo from '../assets/hero2.mp4'
 import heroPoster from '../assets/hero2.jpeg'
-import SkillCarousel from '../components/shared/skill-carousel'
 import HeroNav from '../components/shared/hero-nav'
 import { GithubIcon, LinkedinIcon } from '../components/shared/brand-icons'
 
@@ -66,7 +65,7 @@ function Hero() {
 
           <div className="mt-[2.2rem] flex items-center gap-[0.7rem] max-md:justify-center">
             <a
-              href="https://github.com/"
+              href="https://github.com/Ali-Aryo"
               target="_blank"
               rel="noreferrer"
               aria-label="GitHub"
@@ -75,7 +74,7 @@ function Hero() {
               <GithubIcon className="size-6" />
             </a>
             <a
-              href="https://www.linkedin.com/"
+              href="https://www.linkedin.com/in/aoa25"
               target="_blank"
               rel="noreferrer"
               aria-label="LinkedIn"
@@ -114,7 +113,6 @@ function Hero() {
             aria-hidden="true"
           />
         </a>
-        <SkillCarousel />
       </div>
     </section>
   )
