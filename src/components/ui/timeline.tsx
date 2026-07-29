@@ -29,6 +29,21 @@ const ENTRIES: TimelineEntry[] = [
         ),
     },
     {
+        title: 'Jan 2026',
+        content: (
+            <h4 className="text-base font-semibold text-hero-fg md:text-lg">
+                Winner at NWHacks2026
+                <p className="mb-3 text-sm font-medium text-hero-accent">
+                    Best Wellness Related Hack
+                </p>
+                <p className="mb-3 text-sm font-medium text-hero-accent">
+                    Best First Time Hacker Project
+                </p>
+
+            </h4>
+        ),
+    },
+    {
         title: 'May – Dec 2025',
         content: (
             <div>
@@ -77,7 +92,7 @@ const ENTRIES: TimelineEntry[] = [
         ),
     },
 
-     {
+    {
         title: 'Sep 2022',
         content: (
             <h4 className="text-base font-semibold text-hero-fg md:text-lg">
