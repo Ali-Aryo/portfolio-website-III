@@ -108,8 +108,8 @@ function ProjectTimeline() {
             <h2 className="mb-3 font-heading text-[clamp(1.75rem,4vw,2.75rem)] font-bold uppercase tracking-[0.06em] text-hero-fg">
                 Journey
             </h2>
-            <p className="mb-4 max-w-[46ch] text-sm leading-[1.6] text-hero-muted md:text-base">
-                A short line about the path so far — replace this with your own.
+            <p className="italic mb-4 max-w-[46ch] text-sm leading-[1.6] text-hero-muted md:text-base">
+                'Never leave that till tomorrow which you can do today'
             </p>
             <Timeline data={ENTRIES} />
         </div>
