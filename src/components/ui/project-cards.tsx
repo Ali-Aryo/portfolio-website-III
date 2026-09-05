@@ -1,71 +1,126 @@
-import { ProjectCard } from "@/components/shared/project-card-component"
-import sabaImage from "@/assets/sabalandingpage.png"
-import steadyscriptImage from "@/assets/steadyscript.png"
-import phishnetImage from "@/assets/phishnet.png"
-import portfolio2Image from "@/assets/websiteportfolio2.png"
-import portfolioImage from "@/assets/websiteportfolio.png"
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
+import { ProjectCard } from '@/components/shared/project-card-component'
+import ProjectFilter, { type ActiveFilter } from '@/components/shared/project-filter'
+import ProjectDetailModal from '@/components/shared/project-detail-modal'
+import { findProjectBySlug, projects, usedTags, type Project } from '@/data/projects'
 
+/* Long enough to read as a wave across the grid, short enough that the last
+   card is not still arriving after the first is settled. Capped so a large
+   grid does not turn the tail into a wait. */
+const STAGGER_STEP = 0.04
+const MAX_STAGGER = 0.32
+
+/** The project named by the current URL hash, if any. */
+function projectFromHash(): Project | null {
+    const slug = window.location.hash.replace(/^#/, '')
+    return slug ? (findProjectBySlug(slug) ?? null) : null
+}
 
 export default function ProjectCards() {
+    const [filter, setFilter] = useState<ActiveFilter>('All')
+    /* Read straight from the hash on first render rather than in an effect,
+       so a shared link paints with the modal already open instead of showing
+       the bare grid for a frame first. */
+    const [active, setActive] = useState<Project | null>(projectFromHash)
+    const reduceMotion = useReducedMotion() ?? false
+
+    /* Whether the currently open modal owns a history entry we pushed. Deep
+       linking straight to #some-project does not, so closing that must not call
+       history.back() — it would navigate away from the site entirely. */
+    const pushedRef = useRef(false)
+
+    const tags = useMemo(() => usedTags(projects), [])
+    const visible = useMemo(
+        () =>
+            filter === 'All'
+                ? projects
+                : projects.filter((project) => project.tags.includes(filter)),
+        [filter],
+    )
+
+    // The URL is the source of truth for which project is open: it makes every
+    // project shareable, and it makes the browser back button close the modal,
+    // which is what users reach for first on mobile.
+    useEffect(() => {
+        const syncFromHash = () => {
+            const next = projectFromHash()
+            setActive(next)
+            pushedRef.current = next !== null
+        }
+        // Both events are needed and neither is redundant: popstate covers
+        // back/forward, hashchange covers the hash being edited in the address
+        // bar or reached from an in-page anchor. pushState fires neither, so
+        // our own opens never round-trip through here. Both handlers derive
+        // state from the same place, so a double fire is a no-op.
+        window.addEventListener('popstate', syncFromHash)
+        window.addEventListener('hashchange', syncFromHash)
+        return () => {
+            window.removeEventListener('popstate', syncFromHash)
+            window.removeEventListener('hashchange', syncFromHash)
+        }
+    }, [])
+
+    const openProject = useCallback((project: Project) => {
+        window.history.pushState(null, '', `#${project.slug}`)
+        pushedRef.current = true
+        setActive(project)
+    }, [])
+
+    const closeProject = useCallback(() => {
+        if (pushedRef.current) {
+            // Pops our own entry; the popstate handler clears `active`.
+            window.history.back()
+            return
+        }
+        window.history.replaceState(null, '', window.location.pathname + window.location.search)
+        setActive(null)
+    }, [])
+
     return (
-        <div className="grid grid-cols-1 gap-8 p-8 md:grid-cols-2 lg:grid-cols-3">
-            <ProjectCard
-                title="Saba Management Consulting Landing Page"
-                description="A data visualization tool for quantum computing experiments, providing real-time insights and complex data analysis."
-                imgSrc={sabaImage}
-                link="#"
-            />
-            <ProjectCard
-                title="SteadyScript"
-                description="A comprehensive AI chatbot platform. This project focuses on the design and development of a user-friendly and visually appealing landing page."
-                imgSrc={steadyscriptImage}
-                link="#"
-            />
-            <ProjectCard
-                title="PaddlePal"
-                description="A data visualization tool for quantum computing experiments, providing real-time insights and complex data analysis."
-                imgSrc="https://images.unsplash.com/photo-1551288049-bebda4e38f71?q=80&w=2070&auto=format&fit=crop"
-                link="#"
-            />
-            <ProjectCard
-                title="Website Portfolio II"
-                description="A comprehensive AI chatbot platform. This project focuses on the design and development of a user-friendly and visually appealing landing page."
-                imgSrc={portfolio2Image}
-                link="#"
-            />
-            <ProjectCard
-                title="Therassist"
-                description="A dreamy mobile app prototype designed for mindfulness and relaxation, featuring calming animations and a serene user interface."
-                imgSrc="https://framerusercontent.com/images/D4M3JTkvSAJaqyRe9AzUnHvL8Ao.jpg"
-                link="#"
-                linkText="Explore Concept"
-            />
-            <ProjectCard
-                title="Phishnet.AI"
-                description="A data visualization tool for quantum computing experiments, providing real-time insights and complex data analysis."
-                imgSrc={phishnetImage}
-                link="#"
+        <>
+            <ProjectFilter
+                tags={tags}
+                active={filter}
+                onChange={setFilter}
+                resultCount={visible.length}
             />
 
-            <ProjectCard
-                title="Website Portfolio"
-                description="A dreamy mobile app prototype designed for mindfulness and relaxation, featuring calming animations and a serene user interface."
-                imgSrc={portfolioImage}
-                link="#"
-                linkText="Explore Concept"
-            />
-            <ProjectCard
-                title="Quantum Analytics Dashboard"
-                description="A data visualization tool for quantum computing experiments, providing real-time insights and complex data analysis."
-                imgSrc="https://images.unsplash.com/photo-1551288049-bebda4e38f71?q=80&w=2070&auto=format&fit=crop"
-                link="#"
-            />
-            <ProjectCard
-                title="Mindful Memories"
-                description="A data visualization tool for quantum computing experiments, providing real-time insights and complex data analysis."
-                imgSrc="https://images.unsplash.com/photo-1551288049-bebda4e38f71?q=80&w=2070&auto=format&fit=crop"
-                link="#"
-            />
-        </div>
-    );
+            <motion.div
+                layout={!reduceMotion}
+                className="grid grid-cols-1 gap-8 px-8 pb-8 md:grid-cols-2 lg:grid-cols-3"
+            >
+                {/* popLayout takes leaving cards out of flow immediately, so the
+                    survivors slide into their new positions instead of waiting
+                    for the exit animation to finish. */}
+                <AnimatePresence mode="popLayout">
+                    {visible.map((project, index) => (
+                        <motion.div
+                            key={project.slug}
+                            layout={!reduceMotion}
+                            initial={reduceMotion ? false : { opacity: 0, scale: 0.92, y: 16 }}
+                            animate={{ opacity: 1, scale: 1, y: 0 }}
+                            exit={reduceMotion ? undefined : { opacity: 0, scale: 0.94 }}
+                            transition={{
+                                duration: reduceMotion ? 0 : 0.4,
+                                ease: 'easeOut',
+                                delay: reduceMotion
+                                    ? 0
+                                    : Math.min(index * STAGGER_STEP, MAX_STAGGER),
+                            }}
+                            className="flex"
+                        >
+                            <ProjectCard
+                                project={project}
+                                onOpen={openProject}
+                                className="w-full"
+                            />
+                        </motion.div>
+                    ))}
+                </AnimatePresence>
+            </motion.div>
+
+            <ProjectDetailModal project={active} onClose={closeProject} />
+        </>
+    )
 }

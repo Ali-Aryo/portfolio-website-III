@@ -1,9 +1,9 @@
 import SiteBackground from './components/shared/site-background'
 import Hero from './sections/Hero'
 import Projects from './sections/Projects'
-//import SkillCarousel from './components/shared/skill-carousel'
-// Timeline lives in `sections/About` — parked for now, not deleted.
-// import About from './sections/About'
+// Parked, not deleted — both still build, they are just not in the page:
+// import SkillCarousel from './components/shared/skill-carousel'
+// import About from './sections/About'   // holds the Timeline
 
 function App() {
   return (
@@ -13,8 +13,6 @@ function App() {
       <SiteBackground />
       <Hero />
       <Projects />
-      {/* <SkillCarousel /> */}
-      {/* <About /> */}
     </>
   )
 }

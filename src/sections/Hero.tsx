@@ -61,6 +61,7 @@ function Hero() {
 
           <p className="mt-[1.4rem] font-heading text-[clamp(1.3rem,2.6vw,1.75rem)] font-medium uppercase tracking-[0.16em] text-hero-accent [text-shadow:0_1px_12px_rgba(0,0,0,0.4)]">
             Computer Engineer
+            Simon Fraser University
           </p>
 
           <div className="mt-[2.2rem] flex items-center gap-[0.7rem] max-md:justify-center">
