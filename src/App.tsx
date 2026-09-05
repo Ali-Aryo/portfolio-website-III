@@ -1,7 +1,9 @@
 import SiteBackground from './components/shared/site-background'
 import Hero from './sections/Hero'
-import About from './sections/About'
-import SkillCarousel from './components/shared/skill-carousel'
+import Projects from './sections/Projects'
+//import SkillCarousel from './components/shared/skill-carousel'
+// Timeline lives in `sections/About` — parked for now, not deleted.
+// import About from './sections/About'
 
 function App() {
   return (
@@ -10,9 +12,9 @@ function App() {
           it needs `relative z-10` and no background of its own. */}
       <SiteBackground />
       <Hero />
-      <SkillCarousel />
-      <About />
-
+      <Projects />
+      {/* <SkillCarousel /> */}
+      {/* <About /> */}
     </>
   )
 }

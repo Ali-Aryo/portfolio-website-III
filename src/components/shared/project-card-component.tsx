@@ -17,7 +17,7 @@ const ProjectCard = React.forwardRef<HTMLDivElement, ProjectCardProps>(
             <div
                 ref={ref}
                 className={cn(
-                    "group relative flex cursor-pointer flex-col overflow-hidden rounded-2xl border bg-card text-card-foreground shadow-sm transition-all duration-500 ease-in-out hover:-translate-y-2 hover:shadow-xl",
+                    "group relative flex cursor-pointer flex-col overflow-hidden rounded-2xl liquid-glass border border-white/20 text-glass-text transition-all duration-500 ease-in-out hover:-translate-y-2 hover:border-white/35",
                     className
                 )}
                 {...props}
@@ -34,17 +34,17 @@ const ProjectCard = React.forwardRef<HTMLDivElement, ProjectCardProps>(
 
                 {/* Card Content Section */}
                 <div className="flex flex-1 flex-col p-6">
-                    <h3 className="text-xl font-semibold transition-colors duration-300 group-hover:text-primary">
+                    <h3 className="font-heading text-xl font-semibold tracking-[0.03em] text-hero-fg transition-colors duration-300 group-hover:text-hero-accent [text-shadow:0_1px_10px_rgba(8,6,13,0.45)]">
                         {title}
                     </h3>
-                    <p className="mt-3 flex-1 text-muted-foreground">{description}</p>
+                    <p className="mt-3 flex-1 text-sm leading-[1.6] text-hero-muted md:text-base">{description}</p>
 
                     {/* Card Link/CTA */}
                     <a
                         href={link}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="group/button mt-4 inline-flex items-center gap-2 text-sm font-medium text-primary transition-all duration-300 hover:underline"
+                        className="group/button mt-4 inline-flex items-center gap-2 font-mono text-[0.72rem] uppercase tracking-[0.22em] text-glass-accent transition-all duration-300 hover:underline"
                         onClick={(e) => e.stopPropagation()} // Prevent card's onClick if it has one
                     >
                         {linkText}
