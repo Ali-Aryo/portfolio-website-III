@@ -1,6 +1,8 @@
 import SiteBackground from './components/shared/site-background'
 import Hero from './sections/Hero'
 import Projects from './sections/Projects'
+import Contact from './sections/Contact'
+import SiteFooter from './components/shared/site-footer'
 // Parked, not deleted — both still build, they are just not in the page:
 // import SkillCarousel from './components/shared/skill-carousel'
 // import About from './sections/About'   // holds the Timeline
@@ -13,6 +15,8 @@ function App() {
       <SiteBackground />
       <Hero />
       <Projects />
+      <Contact />
+      <SiteFooter />
     </>
   )
 }

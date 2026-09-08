@@ -99,7 +99,13 @@ export default function ProjectCards() {
                             key={project.slug}
                             layout={!reduceMotion}
                             initial={reduceMotion ? false : { opacity: 0, scale: 0.92, y: 16 }}
-                            animate={{ opacity: 1, scale: 1, y: 0 }}
+                            /* whileInView rather than animate: the grid sits below
+                               the fold on load, so animating on mount plays the
+                               reveal off-screen before anyone scrolls to see it.
+                               `once: true` means it only plays the first time each
+                               card enters view, not on every scroll past it. */
+                            whileInView={{ opacity: 1, scale: 1, y: 0 }}
+                            viewport={{ once: true, amount: 0.2 }}
                             exit={reduceMotion ? undefined : { opacity: 0, scale: 0.94 }}
                             transition={{
                                 duration: reduceMotion ? 0 : 0.4,

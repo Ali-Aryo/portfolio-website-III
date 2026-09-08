@@ -5,6 +5,7 @@ import heroPoster from '../assets/hero2.jpeg'
 import HeroNav from '../components/shared/hero-nav'
 import ExperienceModal from '../components/shared/experience-modal'
 import { GithubIcon, LinkedinIcon } from '../components/shared/brand-icons'
+import { GraduationCap, Mail } from 'lucide-react'
 
 function Hero() {
   const videoRef = useRef<HTMLVideoElement>(null)
@@ -101,6 +102,20 @@ function Hero() {
               className="inline-flex size-14 items-center justify-center rounded-full border border-white/25 bg-white/[0.06] text-hero-fg backdrop-blur-[4px] transition duration-200 hover:-translate-y-0.5 hover:border-white/55 hover:bg-white/[0.14] motion-reduce:hover:translate-y-0"
             >
               <LinkedinIcon className="size-6" />
+            </a>
+            <a
+              href="mailto:aliaryo2004@gmail.com"
+              aria-label="Email (Gmail)"
+              className="inline-flex size-14 items-center justify-center rounded-full border border-white/25 bg-white/[0.06] text-hero-fg backdrop-blur-[4px] transition duration-200 hover:-translate-y-0.5 hover:border-white/55 hover:bg-white/[0.14] motion-reduce:hover:translate-y-0"
+            >
+              <Mail className="size-6" />
+            </a>
+            <a
+              href="mailto:aoa25@sfu.ca"
+              aria-label="Email (SFU)"
+              className="inline-flex size-14 items-center justify-center rounded-full border border-white/25 bg-white/[0.06] text-hero-fg backdrop-blur-[4px] transition duration-200 hover:-translate-y-0.5 hover:border-white/55 hover:bg-white/[0.14] motion-reduce:hover:translate-y-0"
+            >
+              <GraduationCap className="size-7" />
             </a>
           </div>
 

@@ -200,6 +200,15 @@
   html {
     @apply font-sans;
   }
+
+  /* Anchor nav links (View Work, Get in Touch, the hero's scroll cue) glide to
+     their target instead of snapping there \u2014 gated behind no-preference so
+     it steps aside for prefers-reduced-motion rather than fighting it. */
+  @media (prefers-reduced-motion: no-preference) {
+    html {
+      scroll-behavior: smooth;
+    }
+  }
 }
 
 @theme inline {
