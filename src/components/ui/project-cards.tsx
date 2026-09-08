@@ -11,6 +11,21 @@ import { findProjectBySlug, projects, usedTags, type Project } from '@/data/proj
 const STAGGER_STEP = 0.04
 const MAX_STAGGER = 0.32
 
+/* Tighter than the arrival wave, so re-filtering reads as the grid reshuffling
+   rather than introducing itself again. */
+const SWAP_STAGGER_STEP = 0.025
+const MAX_SWAP_STAGGER = 0.15
+
+const SHOWN = { opacity: 1, scale: 1, y: 0 }
+
+/* The reveal the section gets the one time it is first scrolled to. */
+const INTRO_FROM = { opacity: 0, scale: 0.92, y: 16 }
+const INTRO_VIEWPORT = { once: true, amount: 0.2 }
+
+/* Filter swaps enter from exactly what an exit leaves on, so a card arriving
+   and a card leaving are one gesture run in opposite directions. */
+const SWAP_FROM = { opacity: 0, scale: 0.94 }
+
 /** The project named by the current URL hash, if any. */
 function projectFromHash(): Project | null {
     const slug = window.location.hash.replace(/^#/, '')
@@ -19,11 +34,21 @@ function projectFromHash(): Project | null {
 
 export default function ProjectCards() {
     const [filter, setFilter] = useState<ActiveFilter>('All')
+    /* Which of the two entrances the cards are currently using. The staggered
+       reveal belongs to the one time the grid is first scrolled to; touching
+       the filter retires it in favour of the swap.
+
+       It has to be tracked here rather than left to the cards' own
+       `viewport={{ once: true }}`, which only dedupes per mount: cards are
+       keyed by slug inside AnimatePresence, so every card that re-enters the
+       filtered set is a brand new mount and would replay the arrival wave. */
+    const [introDone, setIntroDone] = useState(false)
     /* Read straight from the hash on first render rather than in an effect,
        so a shared link paints with the modal already open instead of showing
        the bare grid for a frame first. */
     const [active, setActive] = useState<Project | null>(projectFromHash)
     const reduceMotion = useReducedMotion() ?? false
+    const playIntro = !reduceMotion && !introDone
 
     /* Whether the currently open modal owns a history entry we pushed. Deep
        linking straight to #some-project does not, so closing that must not call
@@ -61,6 +86,11 @@ export default function ProjectCards() {
         }
     }, [])
 
+    const changeFilter = useCallback((next: ActiveFilter) => {
+        setIntroDone(true)
+        setFilter(next)
+    }, [])
+
     const openProject = useCallback((project: Project) => {
         window.history.pushState(null, '', `#${project.slug}`)
         pushedRef.current = true
@@ -82,7 +112,7 @@ export default function ProjectCards() {
             <ProjectFilter
                 tags={tags}
                 active={filter}
-                onChange={setFilter}
+                onChange={changeFilter}
                 resultCount={visible.length}
             />
 
@@ -98,21 +128,34 @@ export default function ProjectCards() {
                         <motion.div
                             key={project.slug}
                             layout={!reduceMotion}
-                            initial={reduceMotion ? false : { opacity: 0, scale: 0.92, y: 16 }}
-                            /* whileInView rather than animate: the grid sits below
-                               the fold on load, so animating on mount plays the
-                               reveal off-screen before anyone scrolls to see it.
-                               `once: true` means it only plays the first time each
-                               card enters view, not on every scroll past it. */
-                            whileInView={{ opacity: 1, scale: 1, y: 0 }}
-                            viewport={{ once: true, amount: 0.2 }}
-                            exit={reduceMotion ? undefined : { opacity: 0, scale: 0.94 }}
+                            initial={
+                                reduceMotion ? false : playIntro ? INTRO_FROM : SWAP_FROM
+                            }
+                            /* The arrival wave is driven by whileInView because the
+                               grid sits below the fold on load, and animating on
+                               mount would play it off-screen before anyone scrolls
+                               to see it.
+
+                               A swap is the opposite case: it is a response to a
+                               click that has already happened, so it runs on
+                               `animate` and plays wherever the card lands —
+                               viewport-gating it would strand cards that arrive
+                               below the fold, invisible until scrolled to. */
+                            whileInView={playIntro ? SHOWN : undefined}
+                            viewport={playIntro ? INTRO_VIEWPORT : undefined}
+                            animate={playIntro ? undefined : SHOWN}
+                            exit={reduceMotion ? undefined : SWAP_FROM}
                             transition={{
-                                duration: reduceMotion ? 0 : 0.4,
+                                duration: reduceMotion ? 0 : playIntro ? 0.4 : 0.3,
                                 ease: 'easeOut',
                                 delay: reduceMotion
                                     ? 0
-                                    : Math.min(index * STAGGER_STEP, MAX_STAGGER),
+                                    : playIntro
+                                      ? Math.min(index * STAGGER_STEP, MAX_STAGGER)
+                                      : Math.min(
+                                            index * SWAP_STAGGER_STEP,
+                                            MAX_SWAP_STAGGER,
+                                        ),
                             }}
                             className="flex"
                         >
