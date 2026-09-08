@@ -1,12 +1,14 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { ChevronDown } from 'lucide-react'
 import heroVideo from '../assets/hero2.mp4'
 import heroPoster from '../assets/hero2.jpeg'
 import HeroNav from '../components/shared/hero-nav'
+import ExperienceModal from '../components/shared/experience-modal'
 import { GithubIcon, LinkedinIcon } from '../components/shared/brand-icons'
 
 function Hero() {
   const videoRef = useRef<HTMLVideoElement>(null)
+  const [experienceOpen, setExperienceOpen] = useState(false)
 
   // Respect users who prefer reduced motion: keep the poster frame, don't play.
   useEffect(() => {
@@ -66,13 +68,20 @@ function Hero() {
             Simon Fraser University
           </p>
           <div className="mt-3.5 flex items-center max-md:justify-center">
-            <span className="inline-flex items-center gap-3 rounded-full border border-white/20 bg-white/[0.08] px-5 py-2.5 backdrop-blur-[8px] shadow-[0_4px_20px_rgba(0,0,0,0.25)] transition duration-200 hover:border-white/35">
+            <button
+              type="button"
+              onClick={() => setExperienceOpen(true)}
+              aria-haspopup="dialog"
+              className="inline-flex cursor-pointer items-center gap-3 rounded-full border border-white/20 bg-white/[0.08] px-5 py-2.5 backdrop-blur-[8px] shadow-[0_4px_20px_rgba(0,0,0,0.25)] transition duration-200 hover:border-white/35 hover:bg-white/[0.12] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-glass-accent"
+            >
               <span className="size-2 rounded-full bg-hero-accent shadow-[0_0_8px_var(--color-hero-accent)]" aria-hidden="true" />
               <span className="font-mono text-[clamp(0.92rem,1.8vw,1.12rem)] uppercase tracking-[0.14em] text-hero-fg">
                 Prev. SWE Co-op at <span className="font-bold text-hero-accent">TELUS</span>
               </span>
-            </span>
+            </button>
           </div>
+
+          <ExperienceModal open={experienceOpen} onClose={() => setExperienceOpen(false)} />
 
           <div className="mt-[2.2rem] flex items-center gap-[0.7rem] max-md:justify-center">
             <a
