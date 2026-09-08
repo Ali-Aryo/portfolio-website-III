@@ -216,6 +216,28 @@ function ProjectDetailModal({ project, onClose }: ProjectDetailModalProps) {
                                             </li>
                                         ))}
                                     </ul>
+
+                                    {/* Kept up here \u2014 rather than at the bottom of the
+                                        write-up \u2014 so the links are visible without
+                                        scrolling. Full width under the tags rather than
+                                        beside the title: that gap is not reliably wide
+                                        enough to hold every link without wrapping oddly. */}
+                                    {project.links && project.links.length > 0 && (
+                                        <div className="mt-4 flex flex-wrap gap-3">
+                                            {project.links.map((link) => (
+                                                <a
+                                                    key={link.href}
+                                                    href={link.href}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="group/link inline-flex min-h-11 items-center gap-2 rounded-full border border-white/20 px-5 font-mono text-[0.72rem] uppercase tracking-[0.18em] text-glass-accent transition-colors duration-300 hover:border-white/40 hover:text-hero-fg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-glass-accent"
+                                                >
+                                                    {link.label}
+                                                    <ArrowUpRight className="h-4 w-4 transition-transform duration-300 group-hover/link:-translate-y-0.5 group-hover/link:translate-x-0.5" />
+                                                </a>
+                                            ))}
+                                        </div>
+                                    )}
                                 </div>
 
                                 {project.overview && (
@@ -300,25 +322,6 @@ function ProjectDetailModal({ project, onClose }: ProjectDetailModalProps) {
                                     </section>
                                 )}
 
-                                {project.links && project.links.length > 0 && (
-                                    <section>
-                                        <SectionLabel>Links</SectionLabel>
-                                        <div className="flex flex-wrap gap-3">
-                                            {project.links.map((link) => (
-                                                <a
-                                                    key={link.href}
-                                                    href={link.href}
-                                                    target="_blank"
-                                                    rel="noopener noreferrer"
-                                                    className="group/link inline-flex min-h-11 items-center gap-2 rounded-full border border-white/20 px-5 font-mono text-[0.72rem] uppercase tracking-[0.18em] text-glass-accent transition-colors duration-300 hover:border-white/40 hover:text-hero-fg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-glass-accent"
-                                                >
-                                                    {link.label}
-                                                    <ArrowUpRight className="h-4 w-4 transition-transform duration-300 group-hover/link:-translate-y-0.5 group-hover/link:translate-x-0.5" />
-                                                </a>
-                                            ))}
-                                        </div>
-                                    </section>
-                                )}
                             </div>
                         </div>
                     </motion.div>

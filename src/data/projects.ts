@@ -21,6 +21,8 @@ import geometryDashGallery1Image from '@/assets/geometrydash-gallery-1.jpg'
 import geometryDashGallery2Image from '@/assets/geometrydash-gallery-2.jpg'
 import steadyscriptGallery1Image from '@/assets/steadyscript-gallery-1.png'
 import steadyscriptGallery2Image from '@/assets/steadyscript-gallery-2.jpg'
+import lookerCliCoverImage from '@/assets/looker-cli-cover.jpg'
+import backupPipelineCoverImage from '@/assets/backup-pipeline-cover.jpg'
 
 /**
  * The filter chips are generated from this list, in this order — see
@@ -28,10 +30,10 @@ import steadyscriptGallery2Image from '@/assets/steadyscript-gallery-2.jpg'
  * appears once at least one project actually carries the tag.
  */
 export const PROJECT_TAGS = [
+    'Co-op',
     'Deployed',
     'AI/ML',
     'Hackathon',
-    'Co-op',
     'Website',
     'Web App',
     'Mobile',
@@ -94,7 +96,7 @@ export const projects: Project[] = [
     {
         slug: 'paddlepal',
         title: 'PaddlePal',
-        context: 'Capstone',
+        context: 'Capstone - SFU',
         summary:
             'A smart pickleball paddle with embedded force sensors, paired over Bluetooth with a companion iOS app that tracks shot zone, power, and shot type in real time.',
         tags: ['Hardware', 'Mobile', 'Website', 'University'],
@@ -166,6 +168,7 @@ export const projects: Project[] = [
             { label: 'Code', href: 'https://github.com/Ali-Aryo/saba-landing-page' },
         ],
     },
+
     {
         slug: 'steadyscript',
         title: 'SteadyScript',
@@ -181,7 +184,7 @@ export const projects: Project[] = [
             'A custom lateral jitter detection algorithm isolates involuntary wobble from intended pen movement \u2014 the team\u2019s core technical contribution, and the hard problem: naive tremor measurement penalizes normal motion.',
             'OpenCV HSV color segmentation tracks the pen marker at roughly 30 FPS, streamed from the browser to a FastAPI backend over WebSocket and rendered back as an MJPEG overlay with a live stability score.',
             'An Arduino Uno gives physical LED feedback (green for steady, red for jittering) driven over serial from the backend, enabling eyes-free training so the user isn\u2019t stuck watching a screen mid-exercise.',
-            'Won Best Beginner Project and Best Wellness-Related Hack at nwHacks 2026.',
+            '🏆 Won Best Beginner Project and Best Wellness-Related Hack at nwHacks 2026.',
         ],
         tech: [
             'React + TypeScript',
@@ -208,6 +211,57 @@ export const projects: Project[] = [
             { label: 'Code', href: 'https://github.com/SteadyScript/SteadyScript' },
             { label: 'Devpost', href: 'https://devpost.com/software/steadyscript' },
             { label: 'Demo Video', href: 'https://www.youtube.com/watch?v=QCpoyvr15rE' },
+        ],
+    },
+    {
+        slug: 'looker-ops-cli',
+        title: 'Looker Ops CLI',
+        context: 'TELUS',
+        summary:
+            'An internal CLI tool built on the Looker SDK, automating reporting and per-client dashboard operations for the team.',
+        tags: ['Co-op', 'Deployed'],
+        cover: lookerCliCoverImage,
+        coverAlt: 'A terminal running looker-cli commands beside a panel of client dashboard data',
+        overview:
+            'A Python CLI tool, built with Typer and the Looker SDK and authenticated via environment-based credentials, that replaced a set of repetitive manual reporting tasks with single commands. Beyond reporting, it grew into the team\u2019s general-purpose interface to the Looker instance: pulling data on any client, duplicating a client\u2019s dashboards into new folders, restoring dashboards from the Google Cloud Storage backups created by the companion Client Backup Pipeline, and listing out most other data the Looker SDK exposes.',
+        highlights: [
+            'Built with Typer for a discoverable, subcommand-based CLI (client fetch, dashboard copy, backup restore, and more) rather than a single flag-heavy script.',
+            'Authenticates against the Looker API via environment variables, keeping credentials out of the codebase entirely.',
+            'Per-client dashboard duplication \u2014 copying an existing dashboard set into a new folder for a new client \u2014 turned a manual, error-prone process into one command.',
+            'Restores dashboards straight from the dated Google Cloud Storage backups produced by the Client Backup Pipeline, closing the loop between the two projects.',
+            'Adopted by the team as the default way to interact with the Looker instance, cutting time spent on routine reporting tasks.',
+        ],
+        tech: [
+            'Python',
+            'Typer',
+            'Looker SDK',
+            'Google Cloud Storage',
+            'Environment-based auth',
+        ],
+    },
+    {
+        slug: 'client-backup-pipeline',
+        title: 'Client Backup Pipeline',
+        context: 'TELUS',
+        summary:
+            'A scheduled Google Cloud Function that backs up every client\u2019s Looker dashboards daily, organized by client for easy restoration.',
+        tags: ['Co-op', 'Deployed'],
+        cover: backupPipelineCoverImage,
+        coverAlt: 'A daily cron trigger flowing through a cloud function into a dated Cloud Storage bucket, organized by client',
+        overview:
+            'A Python script, deployed to Google Cloud Platform as a scheduled Cloud Function and provisioned entirely through Terraform, that backs up every client\u2019s Looker dashboards on a daily cron schedule. Each run creates a new date-stamped bucket in Google Cloud Storage and writes every client\u2019s dashboards into it organized by client, so any dashboard can be found and restored \u2014 via the companion Looker Ops CLI \u2014 without hunting through an undifferentiated backup dump.',
+        highlights: [
+            'Infrastructure defined as code with Terraform, so the Cloud Function, its schedule, and its permissions are reproducible rather than click-configured.',
+            'Runs daily as a scheduled job with no manual trigger, ensuring backups happen consistently regardless of who is around.',
+            'Creates a new date-stamped Cloud Storage bucket per run and organizes every backed-up dashboard by client inside it, so a specific client\u2019s data is easy to locate later.',
+            'Built as the data-safety half of a pair with the Looker Ops CLI, which reads these same backups to restore a client\u2019s dashboards on demand.',
+        ],
+        tech: [
+            'Python',
+            'Looker SDK',
+            'Google Cloud Platform (Cloud Functions)',
+            'Terraform',
+            'Google Cloud Storage',
         ],
     },
     {
@@ -283,7 +337,7 @@ export const projects: Project[] = [
     {
         slug: 'phishnet-ai',
         title: 'PhishNet.AI',
-        context: 'Personal',
+        context: 'AI/ML Hackathon',
         summary:
             'A trained ML classifier that flags phishing emails and text, paired with a Learning Mode that trains users to spot phishing themselves.',
         tags: ['AI/ML', 'Hackathon', 'Web App'],
@@ -452,6 +506,7 @@ export const projects: Project[] = [
             { label: 'Demo Video', href: 'https://youtu.be/0pK_cgNPLDc' },
         ],
     },
+
 ]
 
 /**

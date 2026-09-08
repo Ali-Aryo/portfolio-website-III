@@ -61,8 +61,18 @@ function Hero() {
 
           <p className="mt-[1.4rem] font-heading text-[clamp(1.3rem,2.6vw,1.75rem)] font-medium uppercase tracking-[0.16em] text-hero-accent [text-shadow:0_1px_12px_rgba(0,0,0,0.4)]">
             Computer Engineer
+          </p>
+          <p className="mt-1 font-heading text-[clamp(1.3rem,2.6vw,1.75rem)] font-medium uppercase tracking-[0.16em] text-hero-accent [text-shadow:0_1px_12px_rgba(0,0,0,0.4)]">
             Simon Fraser University
           </p>
+          <div className="mt-3.5 flex items-center max-md:justify-center">
+            <span className="inline-flex items-center gap-3 rounded-full border border-white/20 bg-white/[0.08] px-5 py-2.5 backdrop-blur-[8px] shadow-[0_4px_20px_rgba(0,0,0,0.25)] transition duration-200 hover:border-white/35">
+              <span className="size-2 rounded-full bg-hero-accent shadow-[0_0_8px_var(--color-hero-accent)]" aria-hidden="true" />
+              <span className="font-mono text-[clamp(0.92rem,1.8vw,1.12rem)] uppercase tracking-[0.14em] text-hero-fg">
+                Prev. SWE Co-op at <span className="font-bold text-hero-accent">TELUS</span>
+              </span>
+            </span>
+          </div>
 
           <div className="mt-[2.2rem] flex items-center gap-[0.7rem] max-md:justify-center">
             <a
@@ -99,7 +109,7 @@ function Hero() {
           top of the band without hard-coding the band's height. */}
       <div className="absolute inset-x-0 bottom-0 z-20 flex flex-col items-center">
         <a
-          href="#about"
+          href="#work"
           aria-label="Scroll to content"
           className="mb-[1.5rem] flex flex-col items-center gap-[0.35rem] no-underline animate-scroll-float motion-reduce:animate-none max-md:hidden"
         >
