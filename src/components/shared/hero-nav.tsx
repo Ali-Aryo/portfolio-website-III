@@ -1,5 +1,7 @@
 import type { ReactNode } from 'react'
+import { motion } from 'framer-motion'
 import resumePdf from '../../assets/Resume.pdf'
+import { HERO_DELAY, rise } from '../../lib/hero-intro'
 
 type GlassLinkProps = {
   href: string
@@ -37,19 +39,25 @@ function GlassLink({ href, children, external = false }: GlassLinkProps) {
 /**
  * Sits in the top-right of the hero. Shares the content column's max-width and
  * padding so its right edge lines up with the heading beneath it.
+ *
+ * Animates as a single unit: it is the first thing to arrive after the hero
+ * scrim, so it reads as the frame settling before the name lands in it. The
+ * variant label comes down from the hero section through Framer's context, so
+ * there is no `animate` prop to thread through here.
  */
 function HeroNav() {
   return (
-    <nav
+    <motion.nav
       aria-label="Primary"
       className="absolute inset-x-0 top-0 z-30 mx-auto flex w-full max-w-[2000px] items-center justify-end gap-[0.3rem] px-[clamp(1.5rem,5vw,5rem)] py-[clamp(1rem,1.8vw,1.8rem)] max-md:justify-center max-md:px-[0.75rem]"
+      variants={rise(HERO_DELAY.nav, 12)}
     >
       <GlassLink href="#work">View Work</GlassLink>
       <GlassLink href="#contact">Get in Touch</GlassLink>
       <GlassLink href={resumePdf} external>
         View Resume
       </GlassLink>
-    </nav>
+    </motion.nav>
   )
 }
 
