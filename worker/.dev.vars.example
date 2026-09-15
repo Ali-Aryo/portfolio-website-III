@@ -4,3 +4,9 @@
 GEMINI_API_KEY=your-gemini-key-here
 QDRANT_URL=https://your-cluster-id.your-region.cloud.qdrant.io:6333
 QDRANT_API_KEY=your-qdrant-key-here
+
+# Optional (M8) — fallback generation provider if Gemini is unavailable.
+# Get a free key at https://openrouter.ai/keys. Leave unset to run on
+# Gemini alone; generateAnswer() in src/index.ts skips the fallback cleanly
+# when this isn't set.
+OPENROUTER_API_KEY=your-openrouter-key-here

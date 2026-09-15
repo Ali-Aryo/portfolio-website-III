@@ -8,4 +8,7 @@ interface Env {
 	GEMINI_API_KEY: string;
 	QDRANT_URL: string;
 	QDRANT_API_KEY: string;
+	// Optional — the fallback generation provider (M8). Its absence just
+	// means generateAnswer() skips straight to relying on Gemini alone.
+	OPENROUTER_API_KEY?: string;
 }
