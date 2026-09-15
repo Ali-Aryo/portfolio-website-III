@@ -1,0 +1,954 @@
+[
+  {
+    "slug": "paddlepal",
+    "title": "PaddlePal",
+    "aliases": [
+      "PaddlePal Connect",
+      "smart pickleball paddle",
+      "PaddlePal capstone"
+    ],
+    "context": "Capstone project — Simon Fraser University",
+    "organization": "Simon Fraser University (SFU)",
+    "timeframe": {
+      "label": "July 2026 – September 2026",
+      "start": "2026-07",
+      "end": "2026-09"
+    },
+    "tags": [
+      "Hardware",
+      "Mobile",
+      "Website",
+      "University"
+    ],
+    "tech": [
+      "Arduino Nano RP2040 Connect (Mbed OS dual-core core)",
+      "C++ (embedded firmware)",
+      "Force-sensitive resistors (4-zone array)",
+      "IMU (accelerometer + gyroscope)",
+      "Bluetooth Low Energy (BLE)",
+      "React Native 0.85",
+      "Expo SDK 56 (Expo Router, dev client)",
+      "TypeScript (strict mode)",
+      "react-native-ble-plx 3.5",
+      "Firebase Authentication",
+      "Cloud Firestore",
+      "Xcode / iOS",
+      "React 19 + Vite 8 (marketing site)",
+      "Tailwind CSS v4",
+      "Oxlint"
+    ],
+    "domains": [
+      "Embedded systems",
+      "IoT",
+      "Mobile development",
+      "Sports analytics"
+    ],
+    "summary": "PaddlePal is a smart pickleball paddle with embedded force sensors, paired over Bluetooth with a companion iOS app that tracks shot zone, power, and shot type in real time.",
+    "overview": "PaddlePal is a Simon Fraser University capstone project spanning custom hardware, a native mobile app, and a marketing site. A 4-zone force-sensor array and an IMU inside the paddle handle stream data over Bluetooth Low Energy to \"PaddlePal Connect,\" a React Native / Expo app that records sessions, classifies shot type (drive, drop, dink, overhead, rally), and stores history in Cloud Firestore. The firmware runs a dual-core Arduino Mbed OS build — one core polling the force sensors, the other handling BLE and the IMU — with a hardware watchdog that auto-recovers from stalls in the field. The app ships a dark, glassmorphic design system called \"Kinetic Precision\" (electric lime accent #DFFF00 on a near-black #020617 canvas, Plus Jakarta Sans type scale), and a separate React 19 + Vite marketing site covers the hero, technology, app, features, demo, and team sections. Built by a five-person team of Ali Shamsi, Peter Phuc, Salem Alsaiari, Robert Truong, and Allen Shapiro; completed and graded A.",
+    "highlights": [
+      "Dual-core Arduino Nano RP2040 firmware: Core 1 polls 4 force-sensitive-resistor zones with hysteresis + peak-hold dedup so one physical hit sends exactly one BLE packet; Core 0 runs BLE, the IMU, and a startup buzz.",
+      "A hardware watchdog auto-reboots the paddle in ~4 seconds if either core stalls — shipped as the resilience layer after a hard-to-pin-down I2C lockup during hardware debugging.",
+      "On-device rule-based shot classifier (Overhead / Drive / Dink / Drop / Rally) runs a cascade over peak gyro magnitude, impact force, windup duration, and hit zone, taken from a trailing IMU window captured around each force hit — no ML model, no server round trip.",
+      "Impact power is bucketed (low / medium / high / super) straight from the force-sensitive-resistor peak, so a player reads shot strength without interpreting raw sensor values.",
+      "Foreground BLE auto-connect and auto-reconnect: the app finds and reconnects to the paddle on its own after a drop, with a manual scanner kept as fallback.",
+      "A seven-step in-context onboarding tour runs on the real dashboard/live/history screens (not a mock), gated on real BLE and Firestore actions rather than just taps.",
+      "Session pipeline buffers hits in memory and flushes once to Firestore on session end, keeping each session comfortably within Firestore's 1MB document limit.",
+      "A \"Kinetic Precision\" design system documented in DESIGN.md and implemented as color, spacing, and typography constants — dark glassmorphic surfaces, an 8px spacing grid, and a dedicated Action Blue reserved exclusively for BLE connectivity states."
+    ],
+    "outcomes": [
+      "Graded A as the final capstone submission (2026-09-04).",
+      "Shipped three integrated deliverables: paddle firmware, the PaddlePal Connect iOS app, and a standalone marketing site.",
+      "End-to-end pipeline works in the field: sensor hit → BLE packet → live zone/power display → on-device shot classification → Firestore session history with per-zone and per-shot-type charts."
+    ],
+    "keywords": [
+      "pickleball",
+      "smart paddle",
+      "force sensitive resistor",
+      "FSR",
+      "IMU",
+      "BLE",
+      "bluetooth low energy",
+      "RP2040",
+      "arduino",
+      "expo",
+      "react native",
+      "firestore",
+      "capstone",
+      "iot",
+      "shot classification",
+      "embedded firmware",
+      "watchdog"
+    ],
+    "links": [
+      {
+        "label": "GitHub Org",
+        "href": "https://github.com/PaddlePal"
+      },
+      {
+        "label": "App Repo",
+        "href": "https://github.com/PaddlePal/PaddlePal-App"
+      },
+      {
+        "label": "Landing Page Repo",
+        "href": "https://github.com/PaddlePal/PaddlePal-LandingPage-II"
+      },
+      {
+        "label": "Live Site",
+        "href": "https://paddlepalconnect.netlify.app/"
+      }
+    ]
+  },
+  {
+    "slug": "saba-landing-page",
+    "title": "Saba Consulting Landing Page",
+    "aliases": [
+      "SABA",
+      "SABA Management Consulting site",
+      "Saba landing page"
+    ],
+    "context": "Client project — SABA Management Consulting",
+    "organization": "SABA Management Consulting",
+    "timeframe": {
+      "label": "Built and shipped in a single day, 21 April 2026",
+      "start": "2026-04",
+      "end": "2026-04"
+    },
+    "tags": [
+      "Website",
+      "Deployed"
+    ],
+    "tech": [
+      "Next.js (App Router)",
+      "TypeScript",
+      "Tailwind CSS v4 + CSS variables",
+      "React Hook Form",
+      "Zod",
+      "Lucide React",
+      "pnpm",
+      "Netlify (hosting + Netlify Forms)"
+    ],
+    "domains": [
+      "Web development",
+      "Marketing sites",
+      "Design systems"
+    ],
+    "summary": "A dark, glassmorphic marketing site pitching SABA as the bridge between AI compute demand and infrastructure supply, with a Netlify-backed lead form.",
+    "overview": "A single-page marketing site for SABA Management Consulting, an AI infrastructure consulting practice. The copy and layout are built around one framing — SABA as the bridge between AI-native compute demand and land/power/shell (LPS) infrastructure supply, \"converting abstract AI demand signals and fragmented site options into structured deals\" — addressed to three audiences in turn: AI-native labs and enterprise AI teams needing GPU capacity and power-ready sites, LPS owners needing qualified AI offtakers and bankable contracts, and neo-clouds and capital partners needing de-risked infrastructure opportunities. The page runs Header → Hero → Positioning → Core Competencies → Global Insights → Contact → Footer, styled with a bespoke dark design system, and captures leads through a validated form wired to Netlify Forms. Built and shipped in a single day on 21 April 2026.",
+    "highlights": [
+      "A typing-effect hero headline that cycles through positioning lines (\"Execution for AI Cluster Deals.\", \"Sovereign AI Compute.\", ...).",
+      "A dark \"Obsidian Architect\" design system: a nocturnal palette anchored at #0A0E1A, glassmorphic backdrop-blur cards, Inter type, ghost borders at 15% opacity or less, and a deliberate no-hard-border rule where section boundaries come from tonal shifts instead of lines.",
+      "A three-column audience breakdown (AI Natives / Providers / Neo-Clouds & LPS) that carries the whole site's value proposition without a generic feature-list layout.",
+      "A validated contact form (React Hook Form + Zod) wired to Netlify Forms with honeypot spam protection — no backend of its own.",
+      "SEO metadata and Open Graph tags written against the practice's actual search terms: AI infrastructure consulting, GPU capacity, neo-cloud."
+    ],
+    "outcomes": [
+      "Live at sabamanagementconsulting.com, serving as the practice's front door and inbound lead channel.",
+      "Zero-maintenance hosting: fully static aside from the Netlify-handled form, no environment variables, no server to run."
+    ],
+    "keywords": [
+      "nextjs",
+      "tailwind",
+      "netlify",
+      "landing page",
+      "marketing site",
+      "glassmorphism",
+      "dark ui",
+      "react hook form",
+      "zod",
+      "consulting",
+      "AI infrastructure",
+      "GPU capacity",
+      "neo-cloud",
+      "lead form",
+      "design system"
+    ],
+    "links": [
+      {
+        "label": "Live Site",
+        "href": "https://sabamanagementconsulting.com/"
+      },
+      {
+        "label": "Code",
+        "href": "https://github.com/Ali-Aryo/saba-landing-page"
+      }
+    ]
+  },
+  {
+    "slug": "steadyscript",
+    "title": "SteadyScript",
+    "aliases": [
+      "Steady Script",
+      "biofeedback pen",
+      "tremor tracker"
+    ],
+    "context": "nwHacks 2026 hackathon project",
+    "organization": "nwHacks 2026",
+    "timeframe": {
+      "label": "nwHacks 2026 — roughly 24 hours",
+      "start": "2026-01",
+      "end": "2026-01"
+    },
+    "tags": [
+      "Hackathon",
+      "Hardware",
+      "Web App"
+    ],
+    "tech": [
+      "React 18/19 + TypeScript",
+      "Vite",
+      "Tailwind CSS",
+      "Framer Motion",
+      "Recharts",
+      "Python",
+      "FastAPI",
+      "WebSocket streaming",
+      "OpenCV (HSV color segmentation)",
+      "Arduino Uno",
+      "PySerial",
+      "Docker Compose"
+    ],
+    "domains": [
+      "Computer vision",
+      "Health tech",
+      "Hardware",
+      "Web apps"
+    ],
+    "summary": "A biofeedback pen and webapp that tracks hand tremor in real time via computer vision, built for fine-motor therapy — won Best Beginner Project and Best Wellness-Related Hack.",
+    "overview": "SteadyScript targets fine-motor therapy for people with Parkinson's disease (110,000+ cases in Canada), stroke survivors, and people recovering from acquired brain injuries. A colored marker on a pen is tracked by a webcam using computer vision; the system separates involuntary tremor from intentional hand movement and gives the user real-time visual and physical LED feedback on how steady their hand is, guiding them through a tremor baseline test and metronome-paced mobility exercises, then a session summary that tracks progress over time. The app is organized into Learn, Practice, Review, and an optional Trace mode. Browser webcam frames stream over WebSocket to a Python FastAPI backend running OpenCV HSV color segmentation at roughly 30 FPS; stability results stream back as an MJPEG overlay with a live score, while an Arduino Uno driven over PySerial lights up green or red so the user can train without watching a screen. Built in roughly 24 hours at nwHacks 2026 by Aiko Sumarno, Danish Hakim, Ali-Aryo Otufat-Shamsi, and Anthony Chan.",
+    "highlights": [
+      "A custom lateral jitter detection algorithm isolates involuntary wobble from intended pen movement — the team's core technical contribution, and the hard problem: naive tremor measurement penalizes normal motion.",
+      "OpenCV HSV color segmentation tracks the pen marker at roughly 30 FPS, streamed from the browser to a FastAPI backend over WebSocket and rendered back as an MJPEG overlay with a live stability score.",
+      "An Arduino Uno gives physical LED feedback (green for steady, red for jittering) driven over serial from the backend, enabling eyes-free training so the user isn't stuck watching a screen mid-exercise.",
+      "A structured therapy session flow — tremor baseline test, then metronome-synced mobility tests, then a performance summary — with results tracked across sessions in Recharts progress graphs.",
+      "Marker color is configurable at runtime through an /hsv endpoint (default blue), so tracking survives different lighting and pen setups without a code change.",
+      "Won Best Beginner Project and Best Wellness-Related Hack (PCCA) at nwHacks 2026."
+    ],
+    "outcomes": [
+      "Won two awards at nwHacks 2026: Best Beginner Project and Best Wellness-Related Hack (PCCA).",
+      "Working end-to-end demo: webcam pen tracking, live stability score, physical LED biofeedback, and session history — all built inside the hackathon window.",
+      "Team roadmap after the event: custom tracing modes with feedback, mobile connectivity, and a wireless Bluetooth pen replacing the wired Arduino setup."
+    ],
+    "keywords": [
+      "tremor",
+      "parkinsons",
+      "biofeedback",
+      "computer vision",
+      "opencv",
+      "hsv",
+      "fastapi",
+      "websocket",
+      "arduino",
+      "hackathon",
+      "nwhacks",
+      "physical therapy",
+      "fine motor",
+      "accessibility",
+      "health tech"
+    ],
+    "links": [
+      {
+        "label": "Code",
+        "href": "https://github.com/SteadyScript/SteadyScript"
+      },
+      {
+        "label": "Devpost",
+        "href": "https://devpost.com/software/steadyscript"
+      },
+      {
+        "label": "Demo Video",
+        "href": "https://www.youtube.com/watch?v=QCpoyvr15rE"
+      }
+    ]
+  },
+  {
+    "slug": "looker-ops-cli",
+    "title": "Looker Ops CLI",
+    "aliases": [
+      "looker-cli",
+      "Looker CLI",
+      "TELUS Looker tooling"
+    ],
+    "context": "Software Engineer co-op at TELUS",
+    "organization": "TELUS",
+    "timeframe": {
+      "label": "TELUS co-op, May 2025 – December 2025",
+      "start": "2025-05",
+      "end": "2025-12"
+    },
+    "tags": [
+      "Co-op",
+      "Deployed"
+    ],
+    "tech": [
+      "Python",
+      "Typer (CLI framework)",
+      "Looker SDK",
+      "Google Cloud Storage",
+      "Environment-based authentication"
+    ],
+    "domains": [
+      "Developer tooling",
+      "Internal tools",
+      "Business intelligence",
+      "Automation"
+    ],
+    "summary": "An internal CLI tool built on the Looker SDK, automating reporting and per-client dashboard operations for the team at TELUS.",
+    "overview": "Looker Ops CLI is a Python command-line tool built with Typer and the Looker SDK, authenticated through environment-based credentials, that replaced a set of repetitive manual reporting tasks with single commands. Built during a software engineering co-op at TELUS, it grew beyond reporting into the team's general-purpose interface to the Looker instance: pulling data on any client, duplicating a client's dashboards into new folders, restoring dashboards from the Google Cloud Storage backups created by its companion Client Backup Pipeline, and listing out most other data the Looker SDK exposes.",
+    "highlights": [
+      "Built with Typer for a discoverable, subcommand-based CLI (client fetch, dashboard copy, backup restore, and more) rather than a single flag-heavy script.",
+      "Authenticates against the Looker API via environment variables, keeping credentials out of the codebase entirely.",
+      "Per-client dashboard duplication — copying an existing dashboard set into a new folder for a new client — turned a manual, error-prone process into one command.",
+      "Restores dashboards straight from the dated Google Cloud Storage backups produced by the Client Backup Pipeline, closing the loop between the two projects.",
+      "Adopted by the team as the default way to interact with the Looker instance, cutting time spent on routine reporting tasks."
+    ],
+    "outcomes": [
+      "Became the team's standard interface to Looker, not just a reporting shortcut.",
+      "Measurably reduced time spent on routine reporting and client-onboarding tasks.",
+      "Paired with the Client Backup Pipeline to give the team a complete backup-and-restore story for client dashboards."
+    ],
+    "keywords": [
+      "looker",
+      "cli",
+      "typer",
+      "python",
+      "telus",
+      "co-op",
+      "internship",
+      "automation",
+      "business intelligence",
+      "dashboards",
+      "gcs",
+      "google cloud storage",
+      "internal tooling"
+    ],
+    "links": []
+  },
+  {
+    "slug": "client-backup-pipeline",
+    "title": "Client Backup Pipeline",
+    "aliases": [
+      "Looker backup pipeline",
+      "dashboard backup automation"
+    ],
+    "context": "Software Engineer co-op at TELUS",
+    "organization": "TELUS",
+    "timeframe": {
+      "label": "TELUS co-op, May 2025 – December 2025",
+      "start": "2025-05",
+      "end": "2025-12"
+    },
+    "tags": [
+      "Co-op",
+      "Deployed"
+    ],
+    "tech": [
+      "Python",
+      "Looker SDK",
+      "Google Cloud Platform (Cloud Functions)",
+      "Cloud Scheduler (daily cron)",
+      "Terraform",
+      "Google Cloud Storage"
+    ],
+    "domains": [
+      "Cloud infrastructure",
+      "Infrastructure as code",
+      "Automation",
+      "Data safety"
+    ],
+    "summary": "A scheduled Google Cloud Function that backs up every client's Looker dashboards daily, organized by client for easy restoration.",
+    "overview": "Client Backup Pipeline is a Python script deployed to Google Cloud Platform as a scheduled Cloud Function and provisioned entirely through Terraform, backing up every client's Looker dashboards on a daily cron schedule. Each run creates a new date-stamped bucket in Google Cloud Storage and writes every client's dashboards into it organized by client, so any dashboard can be found and restored — via the companion Looker Ops CLI — without hunting through an undifferentiated backup dump. Built during a software engineering co-op at TELUS as the data-safety half of a pair with that CLI.",
+    "highlights": [
+      "Infrastructure defined as code with Terraform, so the Cloud Function, its schedule, and its permissions are reproducible rather than click-configured.",
+      "Runs daily as a scheduled job with no manual trigger, ensuring backups happen consistently regardless of who is around.",
+      "Creates a new date-stamped Cloud Storage bucket per run and organizes every backed-up dashboard by client inside it, so a specific client's data is easy to locate later.",
+      "Built as the data-safety half of a pair with the Looker Ops CLI, which reads these same backups to restore a client's dashboards on demand."
+    ],
+    "outcomes": [
+      "Every client's Looker dashboards are backed up daily with no human involvement.",
+      "Restores are a single command through the Looker Ops CLI, thanks to a backup layout designed for retrieval.",
+      "The whole pipeline — function, schedule, permissions, storage — is reproducible from Terraform code."
+    ],
+    "keywords": [
+      "terraform",
+      "google cloud",
+      "gcp",
+      "cloud functions",
+      "cloud storage",
+      "gcs",
+      "backup",
+      "cron",
+      "looker",
+      "telus",
+      "co-op",
+      "infrastructure as code",
+      "devops",
+      "automation"
+    ],
+    "links": []
+  },
+  {
+    "slug": "website-portfolio-ii",
+    "title": "Website Portfolio II",
+    "aliases": [
+      "portfolio II",
+      "editorial portfolio redesign",
+      "portfolio-website-II"
+    ],
+    "context": "Personal project",
+    "organization": "Personal",
+    "timeframe": {
+      "label": "2026",
+      "start": "2026-01",
+      "end": null
+    },
+    "tags": [
+      "Website",
+      "Deployed"
+    ],
+    "tech": [
+      "React 19",
+      "TypeScript",
+      "Vite",
+      "Tailwind CSS v4",
+      "Framer Motion",
+      "shadcn-style UI primitives (@base-ui/react, class-variance-authority, tailwind-merge)",
+      "Lucide React / developer-icons",
+      "Geist Variable + Cinzel Variable (Fontsource)",
+      "ResizeObserver API"
+    ],
+    "domains": [
+      "Web development",
+      "Front-end animation",
+      "Design systems"
+    ],
+    "summary": "A heavier editorial pass on the personal site: a full-bleed video hero, a liquid-glass component system, and a scroll-linked timeline and skill carousel built for a fuller story than the card grid alone.",
+    "overview": "Website Portfolio II is the editorial redesign pass on Ali's personal site — built from scratch rather than from a template, with a single pinned full-bleed video background sitting behind the whole page so every section reads as frosted/liquid glass floating over one continuous scene instead of a stack of separately backgrounded blocks. Beyond the filterable project gallery, this pass built out a scroll-linked Timeline section and a continuously scrolling skill carousel for a heavier, more narrative layout. Both are fully built and kept in the codebase, ready to drop back into the page. It is the sibling of the current portfolio site (see the \"Website Portfolio\" entry) rather than a separate deployment — the current site is the one that is live.",
+    "highlights": [
+      "A reusable `liquid-glass` utility built from layered inset highlights, so panels read as a lit slab of glass rather than a flat tinted box.",
+      "A full-bleed video hero that falls back to a poster frame and pauses itself under `prefers-reduced-motion`.",
+      "A scroll-linked Timeline/About section, adapted from Aceternity: entries reveal — and un-reveal on scroll-up — as their node crosses a viewport-relative trigger line, with the rail fill driven off scroll progress rather than a one-shot animation.",
+      "A continuously scrolling skill carousel where both the loop duration and the number of copies are measured at runtime (`ResizeObserver` plus a fixed px/second speed), so the marquee stays seamless at any viewport width instead of snapping at the loop boundary.",
+      "A filterable project gallery with a deep-linkable detail view — every project has its own shareable URL."
+    ],
+    "outcomes": [
+      "A complete editorial component system — liquid glass panels, scroll-linked timeline, runtime-measured skill carousel — that lives in the codebase and can be re-enabled on the page at any time.",
+      "Deep-linkable project detail views, so any single project can be shared by URL."
+    ],
+    "keywords": [
+      "portfolio",
+      "react",
+      "vite",
+      "tailwind",
+      "framer motion",
+      "glassmorphism",
+      "liquid glass",
+      "timeline",
+      "marquee",
+      "carousel",
+      "scroll animation",
+      "resizeobserver",
+      "personal site",
+      "front end"
+    ],
+    "links": [
+      {
+        "label": "Code",
+        "href": "https://github.com/Ali-Aryo/portfolio-website-III"
+      }
+    ]
+  },
+  {
+    "slug": "therassist",
+    "title": "Therassist",
+    "aliases": [
+      "Therassist AI",
+      "therapy screening app"
+    ],
+    "context": "Technation Hackathon project",
+    "organization": "Technation Hackathon",
+    "timeframe": {
+      "label": "Technation Hackathon, 2026",
+      "start": "2026",
+      "end": "2026"
+    },
+    "tags": [
+      "AI/ML",
+      "Hackathon",
+      "Web App"
+    ],
+    "tech": [
+      "Python 3.11+",
+      "FastAPI + Uvicorn",
+      "DeepFace",
+      "TensorFlow / Keras (tf-keras)",
+      "OpenCV",
+      "OpenAI Whisper (run locally)",
+      "FFmpeg",
+      "WebSocket streaming",
+      "Next.js 16 (App Router)",
+      "React 19",
+      "TypeScript",
+      "Tailwind CSS 4",
+      "TELUS Sovereign AI Factory (LLM reports)"
+    ],
+    "domains": [
+      "AI/ML",
+      "Health tech",
+      "Computer vision",
+      "Speech processing",
+      "Privacy engineering"
+    ],
+    "summary": "An AI pre-session screening tool for therapists: patients answer questions on camera while the app tracks facial emotion and transcribes their responses into a clinical summary.",
+    "overview": "Therassist helps therapists prepare for upcoming sessions by having the patient go through a screening flow beforehand: the app shows therapy questions one at a time, tracks the patient's facial emotions in real time via webcam while they answer, records and transcribes their spoken responses, and generates an AI clinical report summarizing emotional patterns and transcript content for the clinician to review ahead of the real appointment. A deliberate privacy-first design choice runs emotion detection (DeepFace) and speech-to-text (OpenAI Whisper) entirely locally rather than through a cloud API, given the sensitivity of therapy data — only the final report-generation step calls out to an LLM, routed through TELUS's Sovereign AI Factory, sovereign AI infrastructure built for healthcare-grade data privacy and compliance, rather than a generic public API. Built at the Technation Hackathon.",
+    "highlights": [
+      "Real-time facial emotion detection (DeepFace + OpenCV) streamed live to the frontend over WebSocket while the patient answers each question, rather than analyzed after the fact.",
+      "Speech-to-text runs locally via OpenAI Whisper instead of a cloud API, keeping raw audio off third-party servers given the sensitivity of therapy session content.",
+      "AI clinical report generation is routed through TELUS's Sovereign AI Factory — sovereign AI infrastructure built for healthcare-grade data privacy and compliance — rather than a generic public LLM endpoint.",
+      "Full session pipeline in one sitting: question flow → live emotion + audio capture → transcription → LLM-generated summary → therapist-facing report, wired end-to-end during the hackathon.",
+      "A documented REST + WebSocket API (session start, per-question audio and emotion uploads, transcription, summary, live emotion socket) with interactive Swagger docs, so the frontend and backend could be built in parallel."
+    ],
+    "outcomes": [
+      "A working end-to-end prototype demonstrated at the Technation Hackathon: questions, live emotion tracking, local transcription, and an LLM-generated clinical report.",
+      "A privacy architecture that a clinical setting could actually argue for — local inference by default, sovereign infrastructure for the one remote call."
+    ],
+    "keywords": [
+      "therapy",
+      "mental health screening",
+      "deepface",
+      "emotion detection",
+      "whisper",
+      "speech to text",
+      "fastapi",
+      "nextjs",
+      "websocket",
+      "llm",
+      "sovereign ai",
+      "telus",
+      "privacy",
+      "hackathon",
+      "clinical report"
+    ],
+    "links": [
+      {
+        "label": "Code",
+        "href": "https://github.com/Therassist-AI/Therassist"
+      },
+      {
+        "label": "Demo Video",
+        "href": "https://www.youtube.com/watch?v=oBSS91ltZRQ"
+      }
+    ]
+  },
+  {
+    "slug": "phishnet-ai",
+    "title": "PhishNet.AI",
+    "aliases": [
+      "PhishNet",
+      "phishing detector",
+      "spam classifier"
+    ],
+    "context": "AI/ML hackathon project",
+    "organization": "Hackathon",
+    "timeframe": {
+      "label": "Hackathon build",
+      "start": null,
+      "end": null
+    },
+    "tags": [
+      "AI/ML",
+      "Hackathon",
+      "Web App"
+    ],
+    "tech": [
+      "Python",
+      "Flask / Flask-RESTX (Swagger UI)",
+      "scikit-learn (Support Vector Classifier, TfidfVectorizer)",
+      "imbalanced-learn (RandomUnderSampler)",
+      "NLTK (stopword removal)",
+      "joblib (model persistence)",
+      "pandas / NumPy / SciPy",
+      "Matplotlib / Seaborn",
+      "HTML5, CSS3, vanilla JavaScript",
+      "Jupyter Notebook"
+    ],
+    "domains": [
+      "Machine learning",
+      "NLP",
+      "Security",
+      "Web apps"
+    ],
+    "summary": "A trained ML classifier that flags phishing emails and text, paired with a Learning Mode that trains users to spot phishing themselves.",
+    "overview": "PhishNet.AI takes pasted email, Slack, Google Chat, or other text and classifies it as \"Spam\" (phishing) or \"Not Spam\" using a trained machine learning model, giving people a quick way to check something suspicious before acting on it. The classifier is a Support Vector Classifier trained on the SpamAssassin phishing-email dataset from Kaggle, with text represented via TF-IDF vectorization and class imbalance corrected with RandomUnderSampler. Beyond detection, a Learning Mode shows users real challenge emails, has them guess \"Phishy\" or \"Not Phishy\" themselves, and immediately compares their guess against both the model's prediction and the true label — framed explicitly as a tool to build the user's own phishing-recognition skill rather than just a black-box classifier.",
+    "highlights": [
+      "A Support Vector Classifier trained on the SpamAssassin phishing-email dataset (Kaggle), with text represented via TF-IDF vectorization and RandomUnderSampler applied to correct the dataset's class imbalance.",
+      "A consistent preprocessing pipeline (strip special characters/numbers, lowercase, NLTK stopword removal) applied identically at training and inference time, so the model sees the same shape of input it was trained on.",
+      "Learning Mode turns the same model into a teaching tool: users guess phishy-or-not on real challenge emails and see their guess scored against both the model's prediction and the ground truth.",
+      "Model and vectorizer are persisted with joblib and served through a Flask + Flask-RESTX API with interactive Swagger docs, with the training notebook and a written model-performance report kept in the repo.",
+      "A result card gives immediate, legible feedback — red or green glow with the predicted class and probability — rather than a raw score."
+    ],
+    "outcomes": [
+      "A working detector plus a training tool in one app, with model performance documented in a written report alongside the training notebook in the repo.",
+      "Interactive Swagger docs from Flask-RESTX, so the classification endpoint is explorable without the frontend."
+    ],
+    "keywords": [
+      "phishing",
+      "spam detection",
+      "machine learning",
+      "scikit-learn",
+      "svc",
+      "support vector",
+      "tf-idf",
+      "nltk",
+      "flask",
+      "swagger",
+      "kaggle",
+      "spamassassin",
+      "class imbalance",
+      "security awareness",
+      "classifier"
+    ],
+    "links": [
+      {
+        "label": "Code",
+        "href": "https://github.com/Ali-Aryo/PhishNet.AI"
+      },
+      {
+        "label": "Demo Video",
+        "href": "https://youtu.be/rXw9ejR7Rac"
+      }
+    ]
+  },
+  {
+    "slug": "clearcall",
+    "title": "ClearCall",
+    "aliases": [
+      "senhance",
+      "ENSC 429 project",
+      "speech enhancement project",
+      "noise suppression"
+    ],
+    "context": "ENSC 429 — Digital Signal Processing, Simon Fraser University",
+    "organization": "Simon Fraser University (SFU)",
+    "timeframe": {
+      "label": "Summer 2026 — roughly 5 weeks, July to August 2026",
+      "start": "2026-07",
+      "end": "2026-08"
+    },
+    "tags": [
+      "AI/ML",
+      "University"
+    ],
+    "tech": [
+      "Python 3.10+",
+      "NumPy / SciPy (STFT, spectral subtraction, Wiener filtering, custom MCRA noise estimator)",
+      "DeepFilterNet3 (pretrained, PyTorch)",
+      "sounddevice",
+      "VB-Cable (virtual audio cable)",
+      "pesq / pystoi (PESQ-WB, STOI evaluation)",
+      "PyYAML (per-method configs)",
+      "PySide6",
+      "pytest",
+      "black / ruff"
+    ],
+    "domains": [
+      "Digital signal processing",
+      "Audio",
+      "Machine learning",
+      "Benchmarking"
+    ],
+    "summary": "A speech-enhancement study comparing classical DSP, a pretrained deep-learning model, and two hybrids for stripping noise out of live voice/video calls.",
+    "overview": "ClearCall is a Digital Signal Processing (ENSC 429) final project at Simon Fraser University asking whether a hybrid of classical DSP and deep learning can beat either alone at cleaning up voice and video calls made from noisy environments — coffee shops, transit, shared apartments. The cleaned signal is routed back out through a virtual microphone, so it acts as a drop-in noise-suppressed input to any calling app without needing NVIDIA-specific hardware or a closed platform feature. The team designed and benchmarked five enhancement methods — a classical spectral-subtraction plus Wiener-filter baseline, an improved DSP pipeline with speech-aware MCRA-style noise tracking, a pretrained DeepFilterNet3 model, and two DSP/deep-learning hybrids — against the VoiceBank+DEMAND dataset using SNR improvement, PESQ-WB, and STOI, plus a real-time microphone-to-output implementation of the DSP methods. The Python package is named `senhance`.",
+    "highlights": [
+      "Improved DSP pipeline redesigned the noise estimator from a sliding-minimum tracker to an MCRA-style speech-aware estimator, plus soft gain fusion and a gain floor — measurably ahead of the classical baseline on SNRi (1.038 → 1.595 dB), PESQ-WB (2.280 → 2.581), and STOI (0.9419 → 0.9469) while staying real-time.",
+      "Two hybrid fusion strategies tested a specific hypothesis (DSP + DL beats either alone) and disproved it for one of them: fixed waveform/frequency-band fusion of DSP and DeepFilterNet3 output scored 7.774 dB SNRi against DeepFilterNet3's 10.118 alone, by reintroducing DSP-branch noise and distortion.",
+      "A second hybrid instead used the DSP branch only as an RMS-level reference to calibrate DeepFilterNet3's output gain, clamped to at most a 3% boost with peak-safety protection — this achieved the highest SNR improvement of all five methods at 10.312 dB, though unchanged PESQ/STOI showed it was loudness calibration rather than extra denoising.",
+      "A real-time implementation of the DSP methods ran on live microphone input in 480-sample (10 ms) blocks with a measured real-time factor around 0.04× — well inside the deadline — and zero audio dropouts across the test sweep.",
+      "Rigorous evaluation methodology: quantitative benchmarking (SNRi, PESQ-WB, STOI, processing latency, output-safety checks) against roughly 150 matched clean/noisy pairs from VoiceBank+DEMAND, plus blind human listening ratings rather than relying on metrics alone.",
+      "Unit-tested DSP internals (STFT, spectral subtraction, Wiener filter, noise estimator, hybrid methods, DeepFilterNet wrapper) with pytest, unusual for a course signal-processing project."
+    ],
+    "outcomes": [
+      "Five methods fully benchmarked on VoiceBank+DEMAND: Original DSP (SNRi 1.038 dB, PESQ 2.280, STOI 0.9419), Improved DSP (1.595, 2.581, 0.9469), DeepFilterNet3 (10.118, 3.384, 0.9654), Hybrid Fusion (7.774, 3.082, 0.9607), Hybrid Level Calibration (10.312, 3.384, 0.9654).",
+      "The live Improved DSP pipeline ran at a real-time factor of about 0.038 (roughly 38× faster than real time) with ~10 ms algorithmic delay and zero dropouts across the noise-level sweep.",
+      "Headline finding: incrementally fixing a well-understood classical method closed much of the gap to deep learning, but combining two strong systems does not automatically produce a better one — the fusion design matters as much as the individual method quality.",
+      "Known limitations documented by the team: no voice-activity detection yet, DeepFilterNet3 runs offline/whole-array only, Windows-only live loop, and manual rather than automated evaluation."
+    ],
+    "keywords": [
+      "speech enhancement",
+      "noise suppression",
+      "dsp",
+      "digital signal processing",
+      "spectral subtraction",
+      "wiener filter",
+      "mcra",
+      "stft",
+      "deepfilternet",
+      "pesq",
+      "stoi",
+      "snr",
+      "voicebank demand",
+      "real-time audio",
+      "virtual microphone",
+      "ensc 429",
+      "sfu"
+    ],
+    "links": [
+      {
+        "label": "Code",
+        "href": "https://github.com/neema66/ClearCall"
+      },
+      {
+        "label": "Report (PDF)",
+        "href": "ClearCall-Report.pdf"
+      },
+      {
+        "label": "Demo Slides (PDF)",
+        "href": "ClearCall-Demo-Slides.pdf"
+      }
+    ]
+  },
+  {
+    "slug": "fpga-geometry-dash",
+    "title": "FPGA Geometry Dash",
+    "aliases": [
+      "Geometry Dash FPGA",
+      "ENSC 452 project",
+      "ZedBoard game"
+    ],
+    "context": "ENSC 452 — Advanced Digital Systems Design, Simon Fraser University",
+    "organization": "Simon Fraser University (SFU)",
+    "timeframe": {
+      "label": "Four-month milestone-based development",
+      "start": null,
+      "end": null
+    },
+    "tags": [
+      "Hardware",
+      "University"
+    ],
+    "tech": [
+      "Xilinx Zynq-7020 SoC (ZedBoard) — dual ARM Cortex-A9",
+      "Xilinx Vivado (custom AXI4-Lite IP design)",
+      "Xilinx Vitis",
+      "C / C++ (bare-metal, no OS)",
+      "Custom VGA controller IP (1280x1024 @ 60Hz, 108 MHz pixel clock)",
+      "Custom 8-bit LFSR IP (pseudo-random generator)",
+      "Custom Audio Threshold Detector IP",
+      "ADAU1761 audio codec (I2S + I2C)",
+      "FatFs / xilffs (SD card WAV streaming)",
+      "AXI4-Lite and AXI master interfaces",
+      "font8x8 bitmap ASCII font library"
+    ],
+    "domains": [
+      "FPGA",
+      "Embedded systems",
+      "Computer architecture",
+      "Game development",
+      "Digital design"
+    ],
+    "summary": "A from-scratch Geometry Dash clone running bare-metal on a Zynq-7020 FPGA, with a custom VGA driver, dual-core audio/video split, and hardware-generated levels.",
+    "overview": "FPGA Geometry Dash is a recreation of the rhythm-platformer Geometry Dash built entirely on a Xilinx Zynq-7020 (ZedBoard) with no operating system underneath, as the ENSC 452 (Advanced Digital Systems Design) final project at Simon Fraser University. One ARM Cortex-A9 core runs the game engine, physics, collision detection, and a custom pixel-math VGA driver at a locked 60 FPS; the other core is dedicated entirely to streaming WAV audio from an SD card over I2S, so audio playback can never stutter the video. The two cores communicate only through a non-cacheable shared-memory mailbox in on-chip memory, woken with the ARM sev instruction. Two custom AXI4-Lite hardware IP blocks offload work that would otherwise compete with those cores: an 8-bit LFSR generates the endless-mode obstacle stream, and an Audio Threshold Detector compares live audio samples against a threshold in hardware to spawn obstacles in sync with a song's beat. Ships with three playable modes — a hardcoded standard level, an LFSR-driven endless mode, and an audio-reactive mode.",
+    "highlights": [
+      "Dual-core asymmetric multiprocessing with zero shared-cache headaches: Core 0 (game logic + VGA rendering) and Core 1 (SD-card audio streaming) communicate only through a non-cacheable shared-memory mailbox, woken via the ARM sev() instruction — no cache coherency management needed since Core 1 runs with its cache disabled entirely.",
+      "Two custom AXI4-Lite hardware IP blocks: an 8-bit LFSR pseudo-random generator built from 8 flip-flops and 3 XOR gates for endless mode, and an Audio Threshold Detector with live-value, threshold, and flag registers that flags a beat hit directly in hardware for the audio-reactive mode.",
+      "Every visual — menus, the player icon, spikes, even the 90-degree jump-flip rotation — is drawn with coordinate math and an open-source 8x8 ASCII font, not blitted from stored images, after an early pivot away from memcpy'd placeholder art.",
+      "The custom VGA controller is wired as an AXI master into the Zynq's HP0 high-performance port so it pulls frame data straight from DDR without adding traffic to the general-purpose interconnect everything else shares.",
+      "A frame limiter on Core 0, driven by the hardware global timer, holds VGA output to a strict 60 FPS regardless of obstacle count, after early builds visibly sped up and slowed down as on-screen complexity changed.",
+      "WAV files (up to 30MB each) stream from a 64GB SD card through a FatFS wrapper rather than living in on-chip memory — a design pivot forced once the audio library size outgrew what the FPGA's own memory could hold.",
+      "Software guardrails keep procedurally generated levels playable: at most 3 spikes back to back, with a mandatory buffer of empty space enforced after any spike run."
+    ],
+    "outcomes": [
+      "All high-priority requirements delivered: stable 60 FPS VGA output, real-time physics and collision, interrupt-driven jump input, dynamic pixel rendering, I2S audio playback, and the dual-core split.",
+      "Most medium- and low-priority stretch goals also shipped as bonus milestones: custom pixel-drawn main and pause menus, a sprite selector, UART name entry, a rotating jump animation, and high-score tracking.",
+      "Three playable modes delivered — hardcoded standard level, LFSR-driven endless mode, and audio-reactive mode generated from the song's amplitude peaks.",
+      "Team's own stated takeaway: the hardware learning curve (Vivado IP design, AXI bus management, cross-core cache coherency) was steeper than the software side, and integrating individual IP blocks early was the decision that kept the schedule on track."
+    ],
+    "keywords": [
+      "fpga",
+      "zynq",
+      "zedboard",
+      "vivado",
+      "vitis",
+      "bare metal",
+      "arm cortex-a9",
+      "dual core",
+      "amp",
+      "axi",
+      "vga",
+      "lfsr",
+      "i2s",
+      "adau1761",
+      "fatfs",
+      "sd card",
+      "game development",
+      "rhythm game",
+      "custom ip",
+      "cache coherency",
+      "ensc 452",
+      "sfu"
+    ],
+    "links": [
+      {
+        "label": "Code",
+        "href": "https://github.com/Ali-Aryo/FPGA-Geometry-Dash"
+      },
+      {
+        "label": "Demo Video",
+        "href": "https://youtu.be/m1siOqd2qdY"
+      },
+      {
+        "label": "Report (PDF)",
+        "href": "GeometryDash-Report.pdf"
+      },
+      {
+        "label": "Demo Slides (PDF)",
+        "href": "GeometryDash-Demo-Slides.pdf"
+      }
+    ]
+  },
+  {
+    "slug": "website-portfolio",
+    "title": "Website Portfolio",
+    "aliases": [
+      "this site",
+      "personal site",
+      "portfolio-website-III",
+      "ali's portfolio"
+    ],
+    "context": "Personal project",
+    "organization": "Personal",
+    "timeframe": {
+      "label": "Third iteration — first commit 23 July 2026, actively developed since",
+      "start": "2026-07",
+      "end": null
+    },
+    "tags": [
+      "Website",
+      "Deployed"
+    ],
+    "tech": [
+      "React 19",
+      "TypeScript",
+      "Vite",
+      "Tailwind CSS v4",
+      "Framer Motion",
+      "shadcn-style UI primitives",
+      "Netlify (hosting)"
+    ],
+    "domains": [
+      "Web development",
+      "Front-end animation",
+      "Personal branding"
+    ],
+    "summary": "This site. A single-page portfolio built around a full-bleed video hero and a frosted-glass component system.",
+    "overview": "Website Portfolio is Ali's current personal site — the third iteration, built from scratch in React 19, TypeScript, and Vite rather than from a template, superseding an earlier vanilla HTML/CSS/JavaScript portfolio from 2024. The whole page sits over one pinned full-bleed video background layer, so every section below the hero reads as frosted glass floating over the same continuous scene instead of a stack of separate blocks. Its core content is a filterable project gallery driven by a single data file, where each project carries tags, a summary, and a full write-up (overview, highlights, tech stack, gallery images, and links) that expands into its own deep-linkable detail view. The same project content feeds a Cloudflare Worker–backed RAG chatbot widget being built on the site.",
+    "highlights": [
+      "A reusable `liquid-glass` utility built from layered inset highlights, so panels read as a lit slab of glass rather than a flat tinted box.",
+      "A full-bleed video hero that falls back to a poster frame and pauses itself under prefers-reduced-motion.",
+      "A filterable project gallery with a deep-linkable detail view — every project has its own shareable URL.",
+      "Scroll-linked reveals that play in reverse when you scroll back up, rather than firing once and locking.",
+      "Filter chips are derived from the project data rather than hardcoded, so a filter can never point at an empty grid and retagging a project updates the chips for free.",
+      "Project detail views degrade gracefully: any missing field is skipped entirely rather than rendering a bare heading, so a half-filled project still looks deliberate."
+    ],
+    "outcomes": [
+      "Live personal site with a filterable, deep-linkable project gallery serving as Ali's primary portfolio.",
+      "The project data model doubles as the knowledge base for the site's RAG chatbot."
+    ],
+    "keywords": [
+      "portfolio",
+      "personal website",
+      "react",
+      "typescript",
+      "vite",
+      "tailwind",
+      "framer motion",
+      "glassmorphism",
+      "video hero",
+      "netlify",
+      "deep linking",
+      "project gallery"
+    ],
+    "links": [
+      {
+        "label": "Code",
+        "href": "https://github.com/Ali-Aryo/portfolio-website-III"
+      }
+    ]
+  },
+  {
+    "slug": "mindful-memories",
+    "title": "Mindful Memories",
+    "aliases": [
+      "dementia memory app",
+      "CMPT 276 project",
+      "reminiscence therapy app"
+    ],
+    "context": "CMPT 276 — Software Engineering, Simon Fraser University",
+    "organization": "Simon Fraser University (SFU)",
+    "timeframe": {
+      "label": "Fall 2024 — repo created 16 October 2024",
+      "start": "2024-10",
+      "end": "2024-12"
+    },
+    "tags": [
+      "Mobile",
+      "University"
+    ],
+    "tech": [
+      "Android (native, min. Android 12.0)",
+      "Java",
+      "Android Studio",
+      "Firebase",
+      "Gradle",
+      "Canva (design/assets)"
+    ],
+    "domains": [
+      "Mobile development",
+      "Health tech",
+      "Accessibility",
+      "Software engineering process"
+    ],
+    "summary": "An Android app for reminiscence therapy: caregivers build photo-based memory quizzes for people with dementia to practice recall at their own pace.",
+    "overview": "Mindful Memories is a native Android app supporting reminiscence therapy for people with dementia, built as the CMPT 276 (Software Engineering) group project at Simon Fraser University. Caregivers upload a patient's own photos and pair each one with a multiple-choice question about the memory it captures (\"Who is this?\" / \"Where was this taken?\"); the patient then works through these as daily challenges at their own pace, gets encouragement and correct/incorrect feedback, and can exit at any time — no forced completion. It targets people in the early-to-medium stages of dementia and the caregivers or family members who build the memory content, with the team's explicit framing that this isn't a cure: the goal is to make practicing memory stress-free and help delay memory-loss symptoms through repetition-based cognitive exercise. Built by a five-person team split across backend (Java/Android plus Firebase) and frontend/design.",
+    "highlights": [
+      "Caregiver-facing memory builder: upload a photo (gallery or camera), name the memory, then define a question, correct answer, and up to three distractor options before saving it into the patient's exercise set.",
+      "Progress tracking with motivational feedback rather than a pass/fail score, designed around low-stress, self-paced practice for a cognitively-impaired user.",
+      "A simple, accessible interface built specifically for cognitively-impaired users, with the ability to exit any challenge at any time.",
+      "A five-person team split across backend (Java/Android + Firebase) and frontend/design, shipped as a full CMPT 276 group deliverable across 54 commits and 15 branches.",
+      "Framed explicitly as a concept with a stated two-year real-world adoption horizon rather than a shipped product — the team's own honest scoping of what a semester project can claim."
+    ],
+    "outcomes": [
+      "Complete CMPT 276 group deliverable with a working caregiver content builder, patient challenge flow, and Firebase-backed data layer.",
+      "Supporting project site and demo video published alongside the app.",
+      "Positioned by the team as a concept with a two-year adoption horizon rather than a finished product."
+    ],
+    "keywords": [
+      "android",
+      "java",
+      "firebase",
+      "dementia",
+      "reminiscence therapy",
+      "accessibility",
+      "caregivers",
+      "quiz app",
+      "cmpt 276",
+      "sfu",
+      "group project",
+      "mobile app",
+      "health tech"
+    ],
+    "links": [
+      {
+        "label": "Code",
+        "href": "https://gitlab.com/aliaryo2004/mindful-memories"
+      },
+      {
+        "label": "Website",
+        "href": "https://laraclemos.wixsite.com/mindful-memories"
+      },
+      {
+        "label": "Demo Video",
+        "href": "https://youtu.be/0pK_cgNPLDc"
+      }
+    ]
+  }
+]

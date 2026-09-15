@@ -1,0 +1,6 @@
+# Copy this file to .dev.vars and fill in your real values.
+# .dev.vars is gitignored — wrangler dev reads it automatically to populate
+# `env` locally, without ever touching Cloudflare's actual secret store.
+GEMINI_API_KEY=your-gemini-key-here
+QDRANT_URL=https://your-cluster-id.your-region.cloud.qdrant.io:6333
+QDRANT_API_KEY=your-qdrant-key-here
