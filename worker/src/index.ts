@@ -3,7 +3,9 @@
  *
  * - Run `npm run dev` in this folder to start a local dev server
  * - Requires GEMINI_API_KEY, QDRANT_URL, QDRANT_API_KEY in .dev.vars locally
- *   (see .dev.vars.example)
+ *   (see .dev.vars.example). OPENROUTER_API_KEY is optional — without it,
+ *   the chain just drops its last (OpenRouter) fallback tier, primary
+ *   Gemini plus the same-key Gemini backup model still work on their own.
  * - Test locally with curl once it's running:
  *     curl -X POST http://localhost:8787/chat \
  *       -H "Content-Type: application/json" \
@@ -12,8 +14,17 @@
  * M7 pipeline for /chat, per the [[Embeddings & Vector Search]] note:
  *   1. embed the incoming question (RETRIEVAL_QUERY)
  *   2. search Qdrant for the closest stored chunks (pure vector math, no LLM)
- *   3. hand the retrieved chunk text to Gemini as grounding context
- *   4. Gemini writes the actual answer (only step that touches language)
+ *   3. hand the retrieved chunk text to a generation model as context
+ *   4. that model writes the actual answer (only step that touches language)
+ *
+ * M8: step 4 now tries an ordered list of providers (generateAnswer) rather
+ * than a single hard-coded model, so one provider's outage (Gemini's 503s
+ * during development) doesn't become a real visitor's error message. Order
+ * is: primary Gemini model -> a second, lighter Gemini model under the
+ * *same* key (covers a per-model capacity crunch or retirement — the two
+ * failures actually hit so far, and each Gemini model gets its own rate
+ * limit even under one key/project) -> OpenRouter as a last resort if the
+ * whole Gemini API is unreachable.
  *
  * Learn more at https://developers.cloudflare.com/workers/
  */
@@ -32,8 +43,20 @@ function corsHeaders(origin: string | null): HeadersInit {
 	};
 }
 
-const GEMINI_GENERATE_URL =
-	"https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent";
+const GEMINI_MODEL = "gemini-3.6-flash";
+// Same-key backup: a second, lighter Gemini model tried before ever
+// leaving Gemini. Each model gets its own RPM/RPD/TPM bucket even under one
+// project/key (confirmed against Google's own rate-limit docs), so this
+// genuinely dodges a per-model capacity crunch like the 3.8-flash 503s hit
+// earlier — it just can't help if the whole Gemini API is down, since that
+// takes every model under this key with it. Verify this id still exists
+// and check its own limit in AI Studio before relying on it; model
+// names/limits move fast, same lesson as GEMINI_MODEL above.
+const GEMINI_BACKUP_MODEL = "gemini-3.5-flash-lite";
+
+function geminiGenerateUrl(model: string): string {
+	return `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`;
+}
 const GEMINI_EMBED_URL =
 	"https://generativelanguage.googleapis.com/v1beta/models/gemini-embedding-001:embedContent";
 const QDRANT_COLLECTION = "portfolio_chunks";
@@ -46,10 +69,10 @@ const TOP_K = 5; // top-k over a hard score cutoff — see the anisotropy note
 // short retry usually just works. Other error codes (400 bad request,
 // 401/403 auth) won't fix themselves on a retry, so those are returned
 // as-is instead of wasting attempts on them. Same idea as the retry added
-// to ingest.mjs for the same reason, applied here to both Gemini calls
-// since both hit the same upstream infrastructure. The delay is wall-clock
-// time spent awaiting a fetch, not CPU time, so it doesn't eat into a
-// Worker's CPU-time limit — see [[Cloudflare Workers]].
+// to ingest.mjs for the same reason, applied here to every generation-side
+// call since they all hit shared upstream infrastructure. The delay is
+// wall-clock time spent awaiting a fetch, not CPU time, so it doesn't eat
+// into a Worker's CPU-time limit — see [[Cloudflare Workers]].
 async function fetchWithRetry(url: string, init: RequestInit, maxAttempts = 3): Promise<Response> {
 	let res: Response;
 	for (let attempt = 1; attempt <= maxAttempts; attempt++) {
@@ -153,15 +176,6 @@ function buildLinksNote(points: QdrantPoint[]): string {
 		.join("\n");
 }
 
-// ---- Generation: Gemini writes the actual answer, grounded on context -----
-
-interface GeminiResponse {
-	candidates?: {
-		content?: {
-			parts?: { text?: string }[];
-		};
-	}[];
-}
 //System Prompt
 const SYSTEM_INSTRUCTION =
 	"You are the assistant embedded in Ali Shamsi's software portfolio site, answering " +
@@ -182,11 +196,35 @@ const SYSTEM_INSTRUCTION =
 	"answer under a line that reads exactly \"Sources:\", one per line, rather than inline " +
 	"in the middle of a sentence.";
 
-async function askGemini(message: string, context: string, links: string, apiKey: string): Promise<string> {
-	const prompt = `Context:\n${context || "(no relevant context found)"}\n\nKnown links:\n${links || "(none)"
-		}\n\nQuestion: ${message}`;
+// Shared between every provider below — one prompt-building function means
+// a change to how context/links/question are framed can't drift between
+// Gemini and a fallback provider without someone noticing.
+function buildPrompt(context: string, links: string, message: string): string {
+	return `Context:\n${context || "(no relevant context found)"}\n\nKnown links:\n${
+		links || "(none)"
+	}\n\nQuestion: ${message}`;
+}
 
-	const res = await fetchWithRetry(GEMINI_GENERATE_URL, {
+// ---- Generation, provider 1: Gemini ---------------------------------------
+
+interface GeminiResponse {
+	candidates?: {
+		content?: {
+			parts?: { text?: string }[];
+		};
+	}[];
+}
+
+async function askGemini(
+	message: string,
+	context: string,
+	links: string,
+	apiKey: string,
+	model: string
+): Promise<string> {
+	const prompt = buildPrompt(context, links, message);
+
+	const res = await fetchWithRetry(geminiGenerateUrl(model), {
 		method: "POST",
 		headers: {
 			"Content-Type": "application/json",
@@ -197,24 +235,16 @@ async function askGemini(message: string, context: string, links: string, apiKey
 		body: JSON.stringify({
 			systemInstruction: { parts: [{ text: SYSTEM_INSTRUCTION }] },
 			contents: [{ parts: [{ text: prompt }] }],
-			// Swapped from gemini-3.8-flash to gemini-2.5-flash (2026-09-14) —
-			// 3.8-flash was new enough to still be capacity-constrained
-			// (Google's own dashboard showed a 20-requests/DAY ceiling on it,
-			// vs. a far more established model here) and was throwing 503
-			// "high demand" errors even well under that quota. 2.5-flash is
-			// the older, far more heavily-provisioned model, at the cost of
-			// being a generation behind.
-			//
-			// Different generation, different thinking control too — this is
-			// NOT the thinkingLevel low/medium/high used on 3.x models
-			// (that field is 3.x-only; using it on 2.5 risks unexpected
-			// behavior per Google's own docs). 2.5-series models instead use
-			// thinkingBudget, a token count for hidden reasoning (0–24576,
-			// dynamic/-1 by default). thinkingBudget: 0 disables thinking
-			// entirely — the actual lowest-latency setting for this model,
-			// same goal as "low" was serving on 3.8-flash.
+			// Every 3.x-generation Gemini model (both GEMINI_MODEL and
+			// GEMINI_BACKUP_MODEL right now) uses thinkingLevel
+			// (low/medium/high) rather than the 2.5-generation's numeric
+			// thinkingBudget — see [[Gemini API]] for the full model-generation
+			// gotcha (they are NOT interchangeable; using the wrong one on the
+			// wrong generation risks unexpected behavior or an outright 400).
+			// If a future backup model is ever a 2.5-generation model, this
+			// needs to switch to thinkingBudget for that call specifically.
 			generationConfig: {
-				thinkingConfig: { thinkingBudget: 0 },
+				thinkingConfig: { thinkingLevel: "low" },
 			},
 		}),
 	});
@@ -231,6 +261,120 @@ async function askGemini(message: string, context: string, links: string, apiKey
 		data.candidates?.[0]?.content?.parts?.[0]?.text ??
 		"Sorry, I couldn't generate a response."
 	);
+}
+
+// ---- Generation, provider 2 (fallback): OpenRouter ------------------------
+
+const OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions";
+// "openrouter/free" is OpenRouter's own auto-router for its free-tier
+// models — it picks whichever currently-available free model best fits the
+// request, rather than us hard-coding one specific model id. Deliberate:
+// free-tier model lineups here churn fast (this project's own
+// gemini-2.5-flash retiring within weeks is the same lesson), so pinning
+// one specific OpenRouter free model would just recreate the exact
+// staleness problem this fallback exists to protect against.
+const OPENROUTER_MODEL = "openrouter/free";
+
+interface OpenRouterResponse {
+	choices?: { message?: { content?: string } }[];
+}
+
+async function askOpenRouter(
+	message: string,
+	context: string,
+	links: string,
+	apiKey: string
+): Promise<string> {
+	const prompt = buildPrompt(context, links, message);
+
+	const res = await fetchWithRetry(OPENROUTER_URL, {
+		method: "POST",
+		headers: {
+			"Content-Type": "application/json",
+			Authorization: `Bearer ${apiKey}`,
+			// Both optional, but OpenRouter's own docs recommend sending them —
+			// identifies the calling app in OpenRouter's own dashboard/logs.
+			"HTTP-Referer": "https://ali-shamsi-dev.netlify.app",
+			"X-Title": "Ali Shamsi Portfolio Chatbot",
+		},
+		// OpenAI-compatible chat completions shape — a different request
+		// format from Gemini's generateContent (messages[] with roles,
+		// instead of a separate systemInstruction field + contents[]). This
+		// is the de facto standard interface a huge number of providers and
+		// tools speak, worth knowing beyond just this one integration.
+		body: JSON.stringify({
+			model: OPENROUTER_MODEL,
+			messages: [
+				{ role: "system", content: SYSTEM_INSTRUCTION },
+				{ role: "user", content: prompt },
+			],
+		}),
+	});
+
+	if (!res.ok) {
+		throw new Error(`OpenRouter API error: ${res.status} ${await res.text()}`);
+	}
+
+	const data = (await res.json()) as OpenRouterResponse;
+	return data.choices?.[0]?.message?.content ?? "Sorry, I couldn't generate a response.";
+}
+
+// ---- Generation orchestrator: try providers in order ----------------------
+
+interface GenerationAttempt {
+	model: string;
+	run: () => Promise<string>;
+}
+
+// Tries each provider in order and returns the first success, along with
+// which model actually answered (surfaced to the client — this is what a
+// future "answered by ..." sub-message in the widget would read from).
+// Only moves to the next provider on failure; a slow-but-successful primary
+// still wins over a fast fallback. Extending this to a third provider later
+// is just one more array entry, not a restructure.
+async function generateAnswer(
+	message: string,
+	context: string,
+	links: string,
+	env: Env
+): Promise<{ answer: string; model: string }> {
+	const attempts: GenerationAttempt[] = [
+		{
+			model: GEMINI_MODEL,
+			run: () => askGemini(message, context, links, env.GEMINI_API_KEY, GEMINI_MODEL),
+		},
+		{
+			model: GEMINI_BACKUP_MODEL,
+			run: () => askGemini(message, context, links, env.GEMINI_API_KEY, GEMINI_BACKUP_MODEL),
+		},
+	];
+
+	if (env.OPENROUTER_API_KEY) {
+		// TS narrowing on `env.OPENROUTER_API_KEY` (now known non-undefined)
+		// doesn't survive into the closure below — it only holds for plain
+		// variables, not object properties, since TS can't prove the
+		// property won't change before the closure actually runs. Binding it
+		// to a local const is the standard fix.
+		const openRouterKey = env.OPENROUTER_API_KEY;
+		attempts.push({
+			model: OPENROUTER_MODEL,
+			run: () => askOpenRouter(message, context, links, openRouterKey),
+		});
+	} else {
+		console.log("OPENROUTER_API_KEY not set — fallback provider skipped.");
+	}
+
+	let lastErr: unknown;
+	for (const attempt of attempts) {
+		try {
+			const answer = await attempt.run();
+			return { answer, model: attempt.model };
+		} catch (err) {
+			console.error(`Generation via ${attempt.model} failed:`, err);
+			lastErr = err;
+		}
+	}
+	throw lastErr instanceof Error ? lastErr : new Error("All generation providers failed");
 }
 
 export default {
@@ -262,6 +406,9 @@ export default {
 			return Response.json({ error: "message must not be empty" }, { status: 400, headers: cors });
 		}
 
+		// OPENROUTER_API_KEY is intentionally not required here — it's the
+		// fallback provider, not the retrieval pipeline. Missing it just
+		// means generateAnswer skips straight to (and only relies on) Gemini.
 		if (!env.GEMINI_API_KEY || !env.QDRANT_URL || !env.QDRANT_API_KEY) {
 			// Misconfiguration, not a client error — 500, not 400.
 			return Response.json(
@@ -290,10 +437,10 @@ export default {
 		const links = buildLinksNote(points);
 
 		try {
-			const answer = await askGemini(message, context, links, env.GEMINI_API_KEY);
-			return Response.json({ answer }, { headers: cors });
+			const { answer, model } = await generateAnswer(message, context, links, env);
+			return Response.json({ answer, model }, { headers: cors });
 		} catch (err) {
-			console.error("askGemini failed:", err);
+			console.error("generateAnswer failed (all providers):", err);
 			return Response.json(
 				{ error: "Failed to get a response from the model" },
 				{ status: 502, headers: cors }
