@@ -10,7 +10,22 @@
 	"observability": {
 		"enabled": true
 	},
-	"upload_source_maps": true
+	"upload_source_maps": true,
+	/**
+	 * Rate limiting (M8) — per-visitor cap on /chat, read as env.CHAT_RATE_LIMITER.
+	 * https://developers.cloudflare.com/workers/runtime-apis/bindings/rate-limit/
+	 * `period` can only be 10 or 60. `namespace_id` is any positive integer
+	 * (as a string) unique within the Cloudflare account. Counts are
+	 * per-location and eventually consistent — a speed bump against scripted
+	 * spam, not exact accounting; the AI Studio spend cap is the hard backstop.
+	 */
+	"ratelimits": [
+		{
+			"name": "CHAT_RATE_LIMITER",
+			"namespace_id": "1001",
+			"simple": { "limit": 5, "period": 60 }
+		}
+	]
 	/**
 	 * Smart Placement
 	 * https://developers.cloudflare.com/workers/configuration/smart-placement/#smart-placement

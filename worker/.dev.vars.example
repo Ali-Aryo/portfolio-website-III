@@ -10,3 +10,11 @@ QDRANT_API_KEY=your-qdrant-key-here
 # Gemini alone; generateAnswer() in src/index.ts skips the fallback cleanly
 # when this isn't set.
 OPENROUTER_API_KEY=your-openrouter-key-here
+
+# Required (M8) — Cloudflare Turnstile secret. For local dev use Cloudflare's
+# always-pass test secret below (pairs with the test site key in the site's
+# .env). Never deploy it: the real secret is set once with
+# `npx wrangler secret put TURNSTILE_SECRET_KEY` and doesn't live in any file.
+# Other test secrets: 2x0000000000000000000000000000000AA always fails,
+# 3x0000000000000000000000000000000AA returns "token already spent".
+TURNSTILE_SECRET_KEY=1x0000000000000000000000000000000AA

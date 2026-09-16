@@ -10,6 +10,7 @@ import { createPortal } from 'react-dom'
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import { MessageCircle, X, Send, Maximize2, Minimize2 } from 'lucide-react'
 import { cn } from '../../lib/utils'
+import { getTurnstileToken, preloadTurnstile } from '../../lib/turnstile'
 
 interface ChatMessage {
     role: 'user' | 'assistant'
@@ -84,6 +85,7 @@ const EXAMPLE_PROMPTS = [
     'Has Ali ever worked with Python?',
     "What was Ali's capstone project?",
     "Which of Ali's projects have been deployed?",
+    "Provide source URLs for project xxx.",
 ]
 const EXAMPLE_INTERVAL_MS = 3500
 
@@ -127,6 +129,17 @@ function CyclingExample({ className }: { className?: string }) {
 // live in the Worker (env.GEMINI_API_KEY, later) and never here.
 const API_URL = import.meta.env.VITE_CHAT_API_URL
 
+// Mirrors MAX_MESSAGE_CHARS in worker/src/index.ts. The Worker is what
+// actually enforces it (direct API calls skip this widget entirely); this
+// copy just stops a real visitor from typing past it in the first place.
+const MAX_MESSAGE_CHARS = 500
+
+// Shown whether the Turnstile check failed in the browser or the Worker
+// rejected the token — either way, a refresh is the one thing a real
+// visitor can do about it.
+const BOT_CHECK_ERROR =
+    "Couldn't verify this browser — please refresh the page and try again."
+
 /**
  * Floating chat widget — toggle button + panel, styled with the same
  * liquid-glass / hero-* tokens the rest of the page uses. Fixed-position,
@@ -140,7 +153,19 @@ function ChatWidget() {
     const [input, setInput] = useState('')
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState<string | null>(null)
+    // True while Turnstile is showing its checkbox for the pending message.
+    const [awaitingCheck, setAwaitingCheck] = useState(false)
     const scrollRef = useRef<HTMLDivElement>(null)
+    // Where the Turnstile widget renders. Inside panelBody, so it lands in
+    // whichever panel (compact or full screen) is currently mounted.
+    const turnstileRef = useRef<HTMLDivElement>(null)
+
+    // Fetch the Turnstile script as soon as the chat is opened rather than on
+    // page load: most visitors never open the chat, so they never download
+    // it, and those who do don't wait on it when sending their first message.
+    useEffect(() => {
+        if (open) preloadTurnstile()
+    }, [open])
 
     // Keep the panel scrolled to the latest message as the conversation grows.
     useEffect(() => {
@@ -186,12 +211,41 @@ function ChatWidget() {
         setError(null)
 
         try {
+            // Every message needs its own token — see src/lib/turnstile.ts.
+            const container = turnstileRef.current
+            const turnstileToken = container
+                ? await getTurnstileToken(container, () => setAwaitingCheck(true))
+                    .catch((err: unknown) => {
+                        console.error(err)
+                        return null
+                    })
+                    .finally(() => setAwaitingCheck(false))
+                : null
+            if (!turnstileToken) {
+                setError(BOT_CHECK_ERROR)
+                return
+            }
+
             const res = await fetch(`${API_URL}/chat`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ message: trimmed }),
+                body: JSON.stringify({ message: trimmed, turnstileToken }),
             })
 
+            // Limits the Worker enforces get a message a visitor can act on,
+            // rather than the generic "could not reach" error below.
+            if (res.status === 429) {
+                setError("You're sending messages a little fast — please wait a minute and try again.")
+                return
+            }
+            if (res.status === 403) {
+                setError(BOT_CHECK_ERROR)
+                return
+            }
+            if (res.status === 413) {
+                setError(`That message is too long — please keep it under ${MAX_MESSAGE_CHARS} characters.`)
+                return
+            }
             if (!res.ok) {
                 throw new Error(`Worker responded with ${res.status}`)
             }
@@ -293,9 +347,20 @@ function ChatWidget() {
                         )}
                     </div>
                 ))}
-                {loading && <p className="text-hero-muted">Thinking…</p>}
+                {loading && (
+                    <p className="text-hero-muted">
+                        {awaitingCheck
+                            ? 'Quick check before sending — please tick the box below.'
+                            : 'Thinking…'}
+                    </p>
+                )}
                 {error && <p className="text-red-300">{error}</p>}
             </div>
+
+            {/* Turnstile's checkbox, when Cloudflare asks for one. Empty and
+                zero-height the rest of the time (appearance: interaction-only),
+                so it costs no layout space for most visitors. */}
+            <div ref={turnstileRef} className="flex justify-center" />
 
             <form onSubmit={handleSubmit} className="mt-2 flex items-center gap-2">
                 <div className="relative flex-1">
@@ -305,6 +370,7 @@ function ChatWidget() {
                         // Full screen draws its own placeholder overlay (below),
                         // so the accessible name can't rely on `placeholder`.
                         aria-label="Type a message"
+                        maxLength={MAX_MESSAGE_CHARS}
                         placeholder={fullscreen ? undefined : 'Type a message…'}
                         className="w-full rounded-full border border-white/20 bg-white/5 px-4 py-2 text-sm text-hero-fg placeholder:text-hero-muted focus:outline-none focus:ring-1 focus:ring-hero-accent"
                     />

@@ -1,6 +1,6 @@
 // M6 — run once (safe to re-run: Qdrant just re-applies the same config)
 // to create the collection our chunks will live in.
-//
+// DONT RE RUN
 // Run from worker/:   node scripts/qdrant-collection.mjs
 
 import { readFileSync } from "node:fs";
