@@ -1,11 +1,125 @@
-import { useState, useRef, useEffect, type FormEvent } from 'react'
+import {
+    useState,
+    useRef,
+    useEffect,
+    Fragment,
+    type FormEvent,
+    type ReactNode,
+} from 'react'
 import { createPortal } from 'react-dom'
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import { MessageCircle, X, Send, Maximize2, Minimize2 } from 'lucide-react'
 import { cn } from '../../lib/utils'
 
 interface ChatMessage {
     role: 'user' | 'assistant'
     content: string
+    // Which provider/model actually produced this answer. Optional because
+    // user messages never have one, and because the Worker's fallback chain
+    // (Gemini -> backup Gemini -> OpenRouter) is the only thing that knows
+    // the value — an older/erroring response simply omits it.
+    model?: string
+}
+
+// Anchored on the scheme rather than on bare `www.`/domain-shaped text: the
+// Worker's SYSTEM_INSTRUCTION only ever lets the model emit URLs that appear
+// verbatim in the retrieved "Known links" block, and every one of those is a
+// full https:// URL. A looser pattern would only add false positives
+// ("Node.js", "3.6-flash") without ever catching a real extra link.
+const URL_PATTERN = /(https?:\/\/[^\s<>]+)/g
+
+// Trailing punctuation belongs to the sentence, not the URL — "see
+// https://example.com/a." ends a sentence. Closing brackets get the same
+// treatment for the same reason.
+const TRAILING_PUNCTUATION = /[.,;:!?)\]]+$/
+
+/**
+ * Split plain-text answer prose into text + clickable links.
+ *
+ * The answers come back as plain prose on purpose (no Markdown — the widget
+ * has no parser, see the Worker's formatting rule), with any URLs collected
+ * into a trailing "Sources:" block. That makes a scheme-anchored split all
+ * that's needed here: no Markdown link syntax to unwrap, no HTML to sanitise.
+ * Rendering real <a> elements rather than injecting HTML also means model
+ * output can never become markup.
+ */
+function renderWithLinks(text: string): ReactNode[] {
+    // String.split with a capturing group alternates plain text (even index)
+    // and captured URLs (odd index), and ignores the regex's lastIndex, so
+    // the shared /g pattern above is safe to reuse across calls.
+    return text.split(URL_PATTERN).map((part, i) => {
+        if (i % 2 === 0) return <Fragment key={i}>{part}</Fragment>
+
+        const trailing = part.match(TRAILING_PUNCTUATION)?.[0] ?? ''
+        const href = trailing ? part.slice(0, -trailing.length) : part
+
+        return (
+            <Fragment key={i}>
+                <a
+                    href={href}
+                    // New tab: the chat panel holds an in-progress
+                    // conversation, and navigating away in place would throw
+                    // it out. `noopener noreferrer` matches the convention
+                    // every other external link on the site uses
+                    // (project-detail-modal, Hero, site-footer).
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    // break-all, not break-words: a long URL has no spaces to
+                    // wrap at, so it would otherwise blow out the 22rem
+                    // compact panel's width.
+                    className="break-all text-glass-accent underline decoration-glass-accent/40 underline-offset-2 transition-colors hover:text-hero-fg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-glass-accent"
+                >
+                    {href}
+                </a>
+                {trailing}
+            </Fragment>
+        )
+    })
+}
+
+// Rotated beside the input's "Type a message…" so a first-time visitor sees
+// the kind of question the bot is actually good at (grounded in project
+// data) instead of facing a blank box.
+const EXAMPLE_PROMPTS = [
+    'Has Ali ever worked with Python?',
+    "What was Ali's capstone project?",
+    "Which of Ali's projects have been deployed?",
+]
+const EXAMPLE_INTERVAL_MS = 3500
+
+/**
+ * One example prompt at a time, swapped every few seconds. Only mounted while
+ * the input is empty, so the interval lives exactly as long as it's visible —
+ * mount/unmount handles start/stop, no extra state in ChatWidget.
+ */
+function CyclingExample({ className }: { className?: string }) {
+    const [index, setIndex] = useState(0)
+    const reduceMotion = useReducedMotion() ?? false
+
+    useEffect(() => {
+        const id = setInterval(
+            () => setIndex((i) => (i + 1) % EXAMPLE_PROMPTS.length),
+            EXAMPLE_INTERVAL_MS
+        )
+        return () => clearInterval(id)
+    }, [])
+
+    return (
+        <AnimatePresence mode="wait" initial={false}>
+            <motion.span
+                key={index}
+                // inline-block: a y-transform does nothing on a plain inline
+                // span, and truncate needs a box of its own to clip against.
+                className={cn('inline-block max-w-full truncate align-top italic', className)}
+                initial={reduceMotion ? false : { opacity: 0, y: 6 }}
+                animate={{ opacity: 0.7, y: 0 }}
+                exit={reduceMotion ? undefined : { opacity: 0, y: -6 }}
+                transition={{ duration: reduceMotion ? 0 : 0.25, ease: 'easeOut' }}
+            >
+                e.g. “{EXAMPLE_PROMPTS[index]}”
+            </motion.span>
+        </AnimatePresence>
+    )
 }
 
 // Vite only exposes env vars prefixed VITE_ to client code (see .env) —
@@ -82,8 +196,14 @@ function ChatWidget() {
                 throw new Error(`Worker responded with ${res.status}`)
             }
 
-            const data: { answer: string } = await res.json()
-            setMessages((prev) => [...prev, { role: 'assistant', content: data.answer }])
+            // `model` is which provider in the Worker's fallback chain
+            // actually answered. Optional on the wire so a Worker that
+            // predates it (or any future error path) still parses cleanly.
+            const data: { answer: string; model?: string } = await res.json()
+            setMessages((prev) => [
+                ...prev,
+                { role: 'assistant', content: data.answer, model: data.model },
+            ])
         } catch (err) {
             // A CORS rejection and a network failure both surface here as a
             // generic "Failed to fetch" TypeError — the browser console has
@@ -135,21 +255,42 @@ function ChatWidget() {
             >
                 {messages.length === 0 && (
                     <p className="text-hero-muted">
-                        Ask me something about Ali's projects — this is still a placeholder
-                        echo response until the real LLM call is wired up.
+                        Hi! Ask me anything about Ali's projects — what he built, the tech
+                        behind it, and how it turned out. Answers come straight from his
+                        portfolio, with links to the code or live site where there are any.
                     </p>
                 )}
                 {messages.map((m, i) => (
+                    // Column wrapper rather than the bubble sitting directly
+                    // in the list: the "answered by" line has to sit under
+                    // the bubble and share its side, which an ml-auto/mr-auto
+                    // bubble alone can't express for two stacked elements.
                     <div
                         key={i}
                         className={cn(
-                            'max-w-[85%] rounded-2xl px-3 py-2',
-                            m.role === 'user'
-                                ? 'ml-auto bg-hero-accent/20 text-hero-fg'
-                                : 'mr-auto bg-white/10 text-hero-fg'
+                            'flex flex-col',
+                            m.role === 'user' ? 'items-end' : 'items-start'
                         )}
                     >
-                        {m.content}
+                        <div
+                            className={cn(
+                                // whitespace-pre-wrap so the answer's own line
+                                // breaks survive — the "Sources:" block the
+                                // Worker asks for is one link per line, which
+                                // would otherwise collapse into one run-on line.
+                                'max-w-[85%] whitespace-pre-wrap rounded-2xl px-3 py-2',
+                                m.role === 'user'
+                                    ? 'bg-hero-accent/20 text-hero-fg'
+                                    : 'bg-white/10 text-hero-fg'
+                            )}
+                        >
+                            {m.role === 'assistant' ? renderWithLinks(m.content) : m.content}
+                        </div>
+                        {m.model && (
+                            <span className="mt-1 px-3 font-mono text-[0.68rem] tracking-[0.04em] text-hero-muted">
+                                Answered by {m.model}
+                            </span>
+                        )}
                     </div>
                 ))}
                 {loading && <p className="text-hero-muted">Thinking…</p>}
@@ -157,12 +298,33 @@ function ChatWidget() {
             </div>
 
             <form onSubmit={handleSubmit} className="mt-2 flex items-center gap-2">
-                <input
-                    value={input}
-                    onChange={(e) => setInput(e.target.value)}
-                    placeholder="Type a message…"
-                    className="flex-1 rounded-full border border-white/20 bg-white/5 px-4 py-2 text-sm text-hero-fg placeholder:text-hero-muted focus:outline-none focus:ring-1 focus:ring-hero-accent"
-                />
+                <div className="relative flex-1">
+                    <input
+                        value={input}
+                        onChange={(e) => setInput(e.target.value)}
+                        // Full screen draws its own placeholder overlay (below),
+                        // so the accessible name can't rely on `placeholder`.
+                        aria-label="Type a message"
+                        placeholder={fullscreen ? undefined : 'Type a message…'}
+                        className="w-full rounded-full border border-white/20 bg-white/5 px-4 py-2 text-sm text-hero-fg placeholder:text-hero-muted focus:outline-none focus:ring-1 focus:ring-hero-accent"
+                    />
+                    {/* Full screen has the width for the example to sit right
+                        beside "Type a message…" inside the input. A native
+                        placeholder can't animate or style half its text, hence
+                        the overlay. aria-hidden: the input has its own label,
+                        and re-announcing a new example every few seconds would
+                        just be noise; pointer-events-none so clicks reach the
+                        input underneath. */}
+                    {fullscreen && !input && (
+                        <span
+                            aria-hidden="true"
+                            className="pointer-events-none absolute inset-y-0 left-4 right-4 flex items-center gap-1.5 overflow-hidden text-sm text-hero-muted"
+                        >
+                            <span className="shrink-0">Type a message…</span>
+                            <CyclingExample className="min-w-0" />
+                        </span>
+                    )}
+                </div>
                 <button
                     type="submit"
                     disabled={loading || !input.trim()}
@@ -172,6 +334,16 @@ function ChatWidget() {
                     <Send className="size-4" />
                 </button>
             </form>
+            {/* The compact panel's input is ~120px short of fitting even the
+                shortest example beside "Type a message…" (measured), so there
+                it gets its own line under the input instead. Fixed height and
+                always rendered, so the message list above doesn't jump by a
+                line every time the visitor starts or clears their typing. */}
+            {!fullscreen && (
+                <p aria-hidden="true" className="mt-1.5 h-4 px-4 text-xs text-hero-muted">
+                    {!input && <CyclingExample />}
+                </p>
+            )}
         </>
     )
 

@@ -200,9 +200,8 @@ const SYSTEM_INSTRUCTION =
 // a change to how context/links/question are framed can't drift between
 // Gemini and a fallback provider without someone noticing.
 function buildPrompt(context: string, links: string, message: string): string {
-	return `Context:\n${context || "(no relevant context found)"}\n\nKnown links:\n${
-		links || "(none)"
-	}\n\nQuestion: ${message}`;
+	return `Context:\n${context || "(no relevant context found)"}\n\nKnown links:\n${links || "(none)"
+		}\n\nQuestion: ${message}`;
 }
 
 // ---- Generation, provider 1: Gemini ---------------------------------------
@@ -237,12 +236,6 @@ async function askGemini(
 			contents: [{ parts: [{ text: prompt }] }],
 			// Every 3.x-generation Gemini model (both GEMINI_MODEL and
 			// GEMINI_BACKUP_MODEL right now) uses thinkingLevel
-			// (low/medium/high) rather than the 2.5-generation's numeric
-			// thinkingBudget — see [[Gemini API]] for the full model-generation
-			// gotcha (they are NOT interchangeable; using the wrong one on the
-			// wrong generation risks unexpected behavior or an outright 400).
-			// If a future backup model is ever a 2.5-generation model, this
-			// needs to switch to thinkingBudget for that call specifically.
 			generationConfig: {
 				thinkingConfig: { thinkingLevel: "low" },
 			},
@@ -270,7 +263,7 @@ const OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions";
 // models — it picks whichever currently-available free model best fits the
 // request, rather than us hard-coding one specific model id. Deliberate:
 // free-tier model lineups here churn fast (this project's own
-// gemini-2.5-flash retiring within weeks is the same lesson), so pinning
+// gemini-3.5-flash retiring within weeks is the same lesson), so pinning
 // one specific OpenRouter free model would just recreate the exact
 // staleness problem this fallback exists to protect against.
 const OPENROUTER_MODEL = "openrouter/free";
