@@ -55,7 +55,15 @@ function corsHeaders(origin: string | null): Record<string, string> {
 	};
 }
 
-const GEMINI_MODEL = "gemini-3.6-flash";
+// Primary: gemini-3.5-flash-lite (was gemini-3.6-flash until 2026-09-25 —
+// 3.6-flash's frequent 503 "high demand" errors made it slow as a primary,
+// since each one costs retries before the chain moves on).
+const GEMINI_MODEL = "gemini-3.5-flash-lite";
+// Thinking level per model, because supported levels differ by model and an
+// unsupported one is a hard 400 (seen live with 3.8-flash). 3.5-flash-lite
+// supports "low" (Google's thinking docs). undefined = send no
+// thinkingConfig and let the model use its own default.
+const GEMINI_MODEL_THINKING: GeminiThinkingLevel | undefined = "low";
 // Same-key backup: a second, lighter Gemini model tried before ever
 // leaving Gemini. Each model gets its own RPM/RPD/TPM bucket even under one
 // project/key (confirmed against Google's own rate-limit docs), so this
@@ -64,7 +72,19 @@ const GEMINI_MODEL = "gemini-3.6-flash";
 // takes every model under this key with it. Verify this id still exists
 // and check its own limit in AI Studio before relying on it; model
 // names/limits move fast, same lesson as GEMINI_MODEL above.
-const GEMINI_BACKUP_MODEL = "gemini-3.5-flash-lite";
+// gemini-3.1-flash-lite (2026-09-25). Chosen for availability over answer
+// polish: in testing it answered correctly but once attached another
+// project's link as a Source — accepted, since a wrong link beats no answer
+// or a slow one. gemini-3.5-flash was tried here too and returned 503 "high
+// demand" on 6/6 attempts, the same busy behaviour that demoted 3.6-flash.
+const GEMINI_BACKUP_MODEL = "gemini-3.1-flash-lite";
+// Deliberately unset: Google's thinking-level table (checked 2026-09-25)
+// lists no row for plain gemini-3.1-flash-lite, and its -image sibling only
+// accepts "minimal"/"high" — so rather than guess and risk a 400 that would
+// silently skip this whole tier, the backup runs on its default thinking.
+const GEMINI_BACKUP_MODEL_THINKING: GeminiThinkingLevel | undefined = undefined;
+
+type GeminiThinkingLevel = "minimal" | "low" | "medium" | "high";
 
 function geminiGenerateUrl(model: string): string {
 	return `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`;
@@ -337,7 +357,8 @@ async function askGemini(
 	context: string,
 	links: string,
 	apiKey: string,
-	model: string
+	model: string,
+	thinkingLevel: GeminiThinkingLevel | undefined
 ): Promise<string> {
 	const prompt = buildPrompt(context, links, message);
 
@@ -352,10 +373,11 @@ async function askGemini(
 		body: JSON.stringify({
 			systemInstruction: { parts: [{ text: SYSTEM_INSTRUCTION }] },
 			contents: [{ parts: [{ text: prompt }] }],
-			// Every 3.x-generation Gemini model (both GEMINI_MODEL and
-			// GEMINI_BACKUP_MODEL right now) uses thinkingLevel
+			// thinkingLevel is per model (see GEMINI_MODEL_THINKING) — omitted
+			// entirely when unset, so the model falls back to its own default
+			// instead of rejecting a level it doesn't support.
 			generationConfig: {
-				thinkingConfig: { thinkingLevel: "low" },
+				...(thinkingLevel && { thinkingConfig: { thinkingLevel } }),
 				maxOutputTokens: MAX_OUTPUT_TOKENS,
 			},
 		}),
@@ -400,7 +422,7 @@ const OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions";
 // models — it picks whichever currently-available free model best fits the
 // request, rather than us hard-coding one specific model id. Deliberate:
 // free-tier model lineups here churn fast (this project's own
-// gemini-3.5-flash retiring within weeks is the same lesson), so pinning
+// gemini-2.5-flash retiring within weeks is the same lesson), so pinning
 // one specific OpenRouter free model would just recreate the exact
 // staleness problem this fallback exists to protect against.
 const OPENROUTER_MODEL = "openrouter/free";
@@ -542,11 +564,20 @@ async function generateAnswer(
 	const attempts: GenerationAttempt[] = [
 		{
 			model: GEMINI_MODEL,
-			run: () => askGemini(message, context, links, env.GEMINI_API_KEY, GEMINI_MODEL),
+			run: () =>
+				askGemini(message, context, links, env.GEMINI_API_KEY, GEMINI_MODEL, GEMINI_MODEL_THINKING),
 		},
 		{
 			model: GEMINI_BACKUP_MODEL,
-			run: () => askGemini(message, context, links, env.GEMINI_API_KEY, GEMINI_BACKUP_MODEL),
+			run: () =>
+				askGemini(
+					message,
+					context,
+					links,
+					env.GEMINI_API_KEY,
+					GEMINI_BACKUP_MODEL,
+					GEMINI_BACKUP_MODEL_THINKING
+				),
 		},
 	];
 
