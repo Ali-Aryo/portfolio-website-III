@@ -271,6 +271,21 @@ async function searchQdrant(
 	return data.result ?? [];
 }
 
+// Qdrant Cloud suspends free-tier clusters after ~a week without API traffic,
+// and real /chat traffic isn't guaranteed. The daily cron (wrangler.jsonc
+// `triggers.crons`) makes one cheap call — a point count, no embedding or
+// LLM — purely to reset that inactivity timer.
+async function keepQdrantAwake(qdrantUrl: string, qdrantApiKey: string): Promise<void> {
+	const res = await fetch(`${qdrantUrl}/collections/${QDRANT_COLLECTION}/points/count`, {
+		method: "POST",
+		headers: { "Content-Type": "application/json", "api-key": qdrantApiKey },
+		body: JSON.stringify({ exact: false }),
+	});
+	if (!res.ok) {
+		throw new Error(`Qdrant keep-alive error: ${res.status} ${await res.text()}`);
+	}
+}
+
 // ---- Grounding: turn retrieved chunks into prompt context -----------------
 
 function buildContext(points: QdrantPoint[]): string {
@@ -736,5 +751,9 @@ export default {
 				{ status: 502, headers: cors }
 			);
 		}
+	},
+
+	async scheduled(_controller, env): Promise<void> {
+		await keepQdrantAwake(env.QDRANT_URL, env.QDRANT_API_KEY);
 	},
 } satisfies ExportedHandler<Env>;
